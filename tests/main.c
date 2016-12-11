@@ -18,10 +18,21 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#include "../libsigrokdecode.h" /* First, to avoid compiler warning. */
+#include <config.h>
+#include <libsigrokdecode.h> /* First, to avoid compiler warning. */
 #include <stdlib.h>
 #include <check.h>
 #include "lib.h"
+
+void srdtest_setup(void)
+{
+	/* Silence libsigrokdecode while the unit tests run. */
+	srd_log_loglevel_set(SRD_LOG_NONE);
+}
+
+void srdtest_teardown(void)
+{
+}
 
 int main(void)
 {

@@ -17,22 +17,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "libsigrokdecode.h" /* First, so we avoid a _POSIX_C_SOURCE warning. */
-#include "libsigrokdecode-internal.h"
-#include "config.h"
+#include <config.h>
+#include "libsigrokdecode-internal.h" /* First, so we avoid a _POSIX_C_SOURCE warning. */
+#include "libsigrokdecode.h"
 #include <inttypes.h>
 
 typedef struct {
         PyObject_HEAD
 } srd_Decoder;
 
-/* This is only used for nicer srd_dbg() output. */
-static const char *OUTPUT_TYPES[] = {
-	"OUTPUT_ANN",
-	"OUTPUT_PYTHON",
-	"OUTPUT_BINARY",
-	"OUTPUT_META",
-};
+/* This is only used for nicer srd_dbg() output.
+ */
+static const char *output_type_name(unsigned int idx)
+{
+	static const char names[][16] = {
+		"OUTPUT_ANN",
+		"OUTPUT_PYTHON",
+		"OUTPUT_BINARY",
+		"OUTPUT_META",
+		"(invalid)"
+	};
+	return names[MIN(idx, G_N_ELEMENTS(names) - 1)];
+}
 
 static int convert_annotation(struct srd_decoder_inst *di, PyObject *obj,
 		struct srd_proto_data *pdata)
@@ -40,27 +46,27 @@ static int convert_annotation(struct srd_decoder_inst *di, PyObject *obj,
 	PyObject *py_tmp;
 	struct srd_pd_output *pdo;
 	struct srd_proto_data_annotation *pda;
-	int ann_format;
+	int ann_class;
 	char **ann_text;
 
-	/* Should be a list of [annotation format, [string, ...]]. */
-	if (!PyList_Check(obj) && !PyTuple_Check(obj)) {
-		srd_err("Protocol decoder %s submitted %s instead of list.",
-			di->decoder->name, obj->ob_type->tp_name);
+	/* Should be a list of [annotation class, [string, ...]]. */
+	if (!PyList_Check(obj)) {
+		srd_err("Protocol decoder %s submitted an annotation that"
+			" is not a list", di->decoder->name);
 		return SRD_ERR_PYTHON;
 	}
 
 	/* Should have 2 elements. */
 	if (PyList_Size(obj) != 2) {
 		srd_err("Protocol decoder %s submitted annotation list with "
-			"%d elements instead of 2", di->decoder->name,
+			"%zd elements instead of 2", di->decoder->name,
 			PyList_Size(obj));
 		return SRD_ERR_PYTHON;
 	}
 
 	/*
 	 * The first element should be an integer matching a previously
-	 * registered annotation format.
+	 * registered annotation class.
 	 */
 	py_tmp = PyList_GetItem(obj, 0);
 	if (!PyLong_Check(py_tmp)) {
@@ -68,10 +74,10 @@ static int convert_annotation(struct srd_decoder_inst *di, PyObject *obj,
 			"first element was not an integer.", di->decoder->name);
 		return SRD_ERR_PYTHON;
 	}
-	ann_format = PyLong_AsLong(py_tmp);
-	if (!(pdo = g_slist_nth_data(di->decoder->annotations, ann_format))) {
+	ann_class = PyLong_AsLong(py_tmp);
+	if (!(pdo = g_slist_nth_data(di->decoder->annotations, ann_class))) {
 		srd_err("Protocol decoder %s submitted data to unregistered "
-			"annotation format %d.", di->decoder->name, ann_format);
+			"annotation class %d.", di->decoder->name, ann_class);
 		return SRD_ERR_PYTHON;
 	}
 
@@ -88,9 +94,8 @@ static int convert_annotation(struct srd_decoder_inst *di, PyObject *obj,
 		return SRD_ERR_PYTHON;
 	}
 
-	if (!(pda = g_try_malloc(sizeof(struct srd_proto_data_annotation))))
-		return SRD_ERR_MALLOC;
-	pda->ann_format = ann_format;
+	pda = g_malloc(sizeof(struct srd_proto_data_annotation));
+	pda->ann_class = ann_class;
 	pda->ann_text = ann_text;
 	pdata->data = pda;
 
@@ -106,26 +111,25 @@ static int convert_binary(struct srd_decoder_inst *di, PyObject *obj,
 	int bin_class;
 	char *class_name, *buf;
 
-	/* Should be a tuple of (binary class, bytes). */
-	if (!PyTuple_Check(obj)) {
-		srd_err("Protocol decoder %s submitted SRD_OUTPUT_BINARY with "
-				"%s instead of tuple.", di->decoder->name,
-				obj->ob_type->tp_name);
+	/* Should be a list of [binary class, bytes]. */
+	if (!PyList_Check(obj)) {
+		srd_err("Protocol decoder %s submitted non-list for SRD_OUTPUT_BINARY.",
+			di->decoder->name);
 		return SRD_ERR_PYTHON;
 	}
 
 	/* Should have 2 elements. */
-	if (PyTuple_Size(obj) != 2) {
-		srd_err("Protocol decoder %s submitted SRD_OUTPUT_BINARY tuple "
-				"with %d elements instead of 2", di->decoder->name,
+	if (PyList_Size(obj) != 2) {
+		srd_err("Protocol decoder %s submitted SRD_OUTPUT_BINARY list "
+				"with %zd elements instead of 2", di->decoder->name,
 				PyList_Size(obj));
 		return SRD_ERR_PYTHON;
 	}
 
 	/* The first element should be an integer. */
-	py_tmp = PyTuple_GetItem(obj, 0);
+	py_tmp = PyList_GetItem(obj, 0);
 	if (!PyLong_Check(py_tmp)) {
-		srd_err("Protocol decoder %s submitted SRD_OUTPUT_BINARY tuple, "
+		srd_err("Protocol decoder %s submitted SRD_OUTPUT_BINARY list, "
 			"but first element was not an integer.", di->decoder->name);
 		return SRD_ERR_PYTHON;
 	}
@@ -137,9 +141,9 @@ static int convert_binary(struct srd_decoder_inst *di, PyObject *obj,
 	}
 
 	/* Second element should be bytes. */
-	py_tmp = PyTuple_GetItem(obj, 1);
+	py_tmp = PyList_GetItem(obj, 1);
 	if (!PyBytes_Check(py_tmp)) {
-		srd_err("Protocol decoder %s submitted SRD_OUTPUT_BINARY tuple, "
+		srd_err("Protocol decoder %s submitted SRD_OUTPUT_BINARY list, "
 			"but second element was not bytes.", di->decoder->name);
 		return SRD_ERR_PYTHON;
 	}
@@ -151,8 +155,7 @@ static int convert_binary(struct srd_decoder_inst *di, PyObject *obj,
 		return SRD_ERR_PYTHON;
 	}
 
-	if (!(pdb = g_try_malloc(sizeof(struct srd_proto_data_binary))))
-		return SRD_ERR_MALLOC;
+	pdb = g_malloc(sizeof(struct srd_proto_data_binary));
 	if (PyBytes_AsStringAndSize(py_tmp, &buf, &size) == -1)
 		return SRD_ERR_PYTHON;
 	pdb->bin_class = bin_class;
@@ -173,7 +176,7 @@ static int convert_meta(struct srd_proto_data *pdata, PyObject *obj)
 	if (pdata->pdo->meta_type == G_VARIANT_TYPE_INT64) {
 		if (!PyLong_Check(obj)) {
 			PyErr_Format(PyExc_TypeError, "This output was registered "
-					"as 'int', but '%s' was passed.", obj->ob_type->tp_name);
+					"as 'int', but something else was passed.");
 			return SRD_ERR_PYTHON;
 		}
 		intvalue = PyLong_AsLongLong(obj);
@@ -183,7 +186,7 @@ static int convert_meta(struct srd_proto_data *pdata, PyObject *obj)
 	} else if (pdata->pdo->meta_type == G_VARIANT_TYPE_DOUBLE) {
 		if (!PyFloat_Check(obj)) {
 			PyErr_Format(PyExc_TypeError, "This output was registered "
-					"as 'float', but '%s' was passed.", obj->ob_type->tp_name);
+					"as 'float', but something else was passed.");
 			return SRD_ERR_PYTHON;
 		}
 		dvalue = PyFloat_AsDouble(obj);
@@ -231,12 +234,9 @@ static PyObject *Decoder_put(PyObject *self, PyObject *args)
 
 	srd_spew("Instance %s put %" PRIu64 "-%" PRIu64 " %s on oid %d.",
 		 di->inst_id, start_sample, end_sample,
-		 OUTPUT_TYPES[pdo->output_type], output_id);
+		 output_type_name(pdo->output_type), output_id);
 
-	if (!(pdata = g_try_malloc0(sizeof(struct srd_proto_data)))) {
-		srd_err("Failed to g_malloc() struct srd_proto_data.");
-		return NULL;
-	}
+	pdata = g_malloc0(sizeof(struct srd_proto_data));
 	pdata->start_sample = start_sample;
 	pdata->end_sample = end_sample;
 	pdata->pdo = pdo;
@@ -256,12 +256,12 @@ static PyObject *Decoder_put(PyObject *self, PyObject *args)
 	case SRD_OUTPUT_PYTHON:
 		for (l = di->next_di; l; l = l->next) {
 			next_di = l->data;
-			srd_spew("Sending %d-%d to instance %s",
+			srd_spew("Sending %" PRIu64 "-%" PRIu64 " to instance %s",
 				 start_sample, end_sample, next_di->inst_id);
 			if (!(py_res = PyObject_CallMethod(
 				next_di->py_inst, "decode", "KKO", start_sample,
 				end_sample, py_data))) {
-				srd_exception_catch("Calling %s decode(): ",
+				srd_exception_catch("Calling %s decode() failed",
 							next_di->inst_id);
 			}
 			Py_XDECREF(py_res);
@@ -341,8 +341,7 @@ static PyObject *Decoder_register(PyObject *self, PyObject *args,
 		else if (meta_type_py == &PyFloat_Type)
 			meta_type_gv = G_VARIANT_TYPE_DOUBLE;
 		else {
-			PyErr_Format(PyExc_TypeError, "Unsupported type '%s'.",
-					meta_type_py->tp_name);
+			PyErr_Format(PyExc_TypeError, "Unsupported type.");
 			return NULL;
 		}
 	}
@@ -350,10 +349,7 @@ static PyObject *Decoder_register(PyObject *self, PyObject *args,
 	srd_dbg("Instance %s creating new output type %d for %s.",
 		di->inst_id, output_type, proto_id);
 
-	if (!(pdo = g_try_malloc(sizeof(struct srd_pd_output)))) {
-		PyErr_SetString(PyExc_MemoryError, "struct srd_pd_output");
-		return NULL;
-	}
+	pdo = g_malloc(sizeof(struct srd_pd_output));
 
 	/* pdo_id is just a simple index, nothing is deleted from this list anyway. */
 	pdo->pdo_id = g_slist_length(di->pd_output);
@@ -381,13 +377,24 @@ static PyMethodDef Decoder_methods[] = {
 	{NULL, NULL, 0, NULL}
 };
 
-/** @cond PRIVATE */
-SRD_PRIV PyTypeObject srd_Decoder_type = {
-	PyVarObject_HEAD_INIT(NULL, 0)
-	.tp_name = "sigrokdecode.Decoder",
-	.tp_basicsize = sizeof(srd_Decoder),
-	.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-	.tp_doc = "sigrok Decoder base class",
-	.tp_methods = Decoder_methods,
-};
-/** @endcond */
+/** Create the sigrokdecode.Decoder type.
+ * @return The new type object.
+ * @private
+ */
+SRD_PRIV PyObject *srd_Decoder_type_new(void)
+{
+	PyType_Spec spec;
+	PyType_Slot slots[] = {
+		{ Py_tp_doc, "sigrok Decoder base class" },
+		{ Py_tp_methods, Decoder_methods },
+		{ Py_tp_new, (void *)&PyType_GenericNew },
+		{ 0, NULL }
+	};
+	spec.name = "sigrokdecode.Decoder";
+	spec.basicsize = sizeof(srd_Decoder);
+	spec.itemsize = 0;
+	spec.flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE;
+	spec.slots = slots;
+
+	return PyType_FromSpec(&spec);
+}

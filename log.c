@@ -18,10 +18,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#include "libsigrokdecode.h" /* First, so we avoid a _POSIX_C_SOURCE warning. */
-#include "libsigrokdecode-internal.h"
+#include <config.h>
+#include "libsigrokdecode-internal.h" /* First, so we avoid a _POSIX_C_SOURCE warning. */
+#include "libsigrokdecode.h"
 #include <stdarg.h>
 #include <stdio.h>
+#include <glib/gprintf.h>
 
 /**
  * @file
@@ -52,13 +54,6 @@ static srd_log_callback srd_log_cb = srd_logv;
  * This can be used (for example) by C++ GUIs to pass a "this" pointer.
  */
 static void *srd_log_cb_data = NULL;
-
-/* Log domain (a short string that is used as prefix for all messages). */
-/** @cond PRIVATE */
-#define LOGDOMAIN_MAXLEN 30
-#define LOGDOMAIN_DEFAULT "srd: "
-/** @endcond */
-static char srd_log_domain[LOGDOMAIN_MAXLEN + 1] = LOGDOMAIN_DEFAULT;
 
 /**
  * Set the libsigrokdecode loglevel.
@@ -102,50 +97,6 @@ SRD_API int srd_log_loglevel_set(int loglevel)
 SRD_API int srd_log_loglevel_get(void)
 {
 	return cur_loglevel;
-}
-
-/**
- * Set the libsigrokdecode logdomain string.
- *
- * @param logdomain The string to use as logdomain for libsigrokdecode log
- *                  messages from now on. Must not be NULL. The maximum
- *                  length of the string is 30 characters (this does not
- *                  include the trailing NUL-byte). Longer strings are
- *                  silently truncated.
- *                  In order to not use a logdomain, pass an empty string.
- *                  The function makes its own copy of the input string, i.e.
- *                  the caller does not need to keep it around.
- *
- * @return SRD_OK upon success, SRD_ERR_ARG upon invalid logdomain.
- *
- * @since 0.1.0
- */
-SRD_API int srd_log_logdomain_set(const char *logdomain)
-{
-	if (!logdomain) {
-		srd_err("log: %s: logdomain was NULL", __func__);
-		return SRD_ERR_ARG;
-	}
-
-	snprintf((char *)&srd_log_domain, LOGDOMAIN_MAXLEN, "%s", logdomain);
-
-	srd_dbg("Log domain set to '%s'.", (const char *)&srd_log_domain);
-
-	return SRD_OK;
-}
-
-/**
- * Get the currently configured libsigrokdecode logdomain.
- *
- * @return A copy of the currently configured libsigrokdecode logdomain
- *         string. The caller is responsible for g_free()ing the string when
- *         it is no longer needed.
- *
- * @since 0.1.0
- */
-SRD_API char *srd_log_logdomain_get(void)
-{
-	return g_strdup((const char *)&srd_log_domain);
 }
 
 /**
@@ -203,8 +154,6 @@ SRD_API int srd_log_callback_set_default(void)
 static int srd_logv(void *cb_data, int loglevel, const char *format,
 		    va_list args)
 {
-	int ret;
-
 	/* This specific log callback doesn't need the void pointer data. */
 	(void)cb_data;
 
@@ -212,12 +161,12 @@ static int srd_logv(void *cb_data, int loglevel, const char *format,
 	if (loglevel > cur_loglevel)
 		return SRD_OK;
 
-	if (srd_log_domain[0] != '\0')
-		fprintf(stderr, "%s", srd_log_domain);
-	ret = vfprintf(stderr, format, args);
-	fprintf(stderr, "\n");
+	if (fputs("srd: ", stderr) < 0
+			|| g_vfprintf(stderr, format, args) < 0
+			|| putc('\n', stderr) < 0)
+		return SRD_ERR;
 
-	return ret;
+	return SRD_OK;
 }
 
 /** @private */
@@ -228,71 +177,6 @@ SRD_PRIV int srd_log(int loglevel, const char *format, ...)
 
 	va_start(args, format);
 	ret = srd_log_cb(srd_log_cb_data, loglevel, format, args);
-	va_end(args);
-
-	return ret;
-}
-
-/** @private */
-SRD_PRIV int srd_spew(const char *format, ...)
-{
-	int ret;
-	va_list args;
-
-	va_start(args, format);
-	ret = srd_log_cb(srd_log_cb_data, SRD_LOG_SPEW, format, args);
-	va_end(args);
-
-	return ret;
-}
-
-/** @private */
-SRD_PRIV int srd_dbg(const char *format, ...)
-{
-	int ret;
-	va_list args;
-
-	va_start(args, format);
-	ret = srd_log_cb(srd_log_cb_data, SRD_LOG_DBG, format, args);
-	va_end(args);
-
-	return ret;
-}
-
-/** @private */
-SRD_PRIV int srd_info(const char *format, ...)
-{
-	int ret;
-	va_list args;
-
-	va_start(args, format);
-	ret = srd_log_cb(srd_log_cb_data, SRD_LOG_INFO, format, args);
-	va_end(args);
-
-	return ret;
-}
-
-/** @private */
-SRD_PRIV int srd_warn(const char *format, ...)
-{
-	int ret;
-	va_list args;
-
-	va_start(args, format);
-	ret = srd_log_cb(srd_log_cb_data, SRD_LOG_WARN, format, args);
-	va_end(args);
-
-	return ret;
-}
-
-/** @private */
-SRD_PRIV int srd_err(const char *format, ...)
-{
-	int ret;
-	va_list args;
-
-	va_start(args, format);
-	ret = srd_log_cb(srd_log_cb_data, SRD_LOG_ERR, format, args);
 	va_end(args);
 
 	return ret;

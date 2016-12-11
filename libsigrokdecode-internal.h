@@ -22,7 +22,23 @@
 #ifndef LIBSIGROKDECODE_LIBSIGROKDECODE_INTERNAL_H
 #define LIBSIGROKDECODE_LIBSIGROKDECODE_INTERNAL_H
 
+/* Use the stable ABI subset as per PEP 384. */
+#define Py_LIMITED_API 0x03020000
+
+#include <Python.h> /* First, so we avoid a _POSIX_C_SOURCE warning. */
 #include "libsigrokdecode.h"
+
+/* Custom Python types: */
+
+typedef struct {
+	PyObject_HEAD
+	struct srd_decoder_inst *di;
+	uint64_t start_samplenum;
+	unsigned int itercnt;
+	uint8_t *inbuf;
+	uint64_t inbuflen;
+	PyObject *sample;
+} srd_logic;
 
 struct srd_session {
 	int session_id;
@@ -33,7 +49,6 @@ struct srd_session {
 	/* List of frontend callbacks to receive decoder output. */
 	GSList *callbacks;
 };
-
 
 /* srd.c */
 SRD_PRIV int srd_decoder_searchpath_add(const char *path);
@@ -49,30 +64,55 @@ SRD_PRIV struct srd_decoder_inst *srd_inst_find_by_obj( const GSList *stack,
 SRD_PRIV int srd_inst_start(struct srd_decoder_inst *di);
 SRD_PRIV int srd_inst_decode(const struct srd_decoder_inst *di,
 		uint64_t start_samplenum, uint64_t end_samplenum,
-		const uint8_t *inbuf, uint64_t inbuflen);
+		const uint8_t *inbuf, uint64_t inbuflen, uint64_t unitsize);
 SRD_PRIV void srd_inst_free(struct srd_decoder_inst *di);
 SRD_PRIV void srd_inst_free_all(struct srd_session *sess, GSList *stack);
 
 /* log.c */
-SRD_PRIV int srd_log(int loglevel, const char *format, ...);
-SRD_PRIV int srd_spew(const char *format, ...);
-SRD_PRIV int srd_dbg(const char *format, ...);
-SRD_PRIV int srd_info(const char *format, ...);
-SRD_PRIV int srd_warn(const char *format, ...);
-SRD_PRIV int srd_err(const char *format, ...);
+#if defined(G_OS_WIN32) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 4))
+/*
+ * On MinGW, we need to specify the gnu_printf format flavor or GCC
+ * will assume non-standard Microsoft printf syntax.
+ */
+SRD_PRIV int srd_log(int loglevel, const char *format, ...)
+		__attribute__((__format__ (__gnu_printf__, 2, 3)));
+#else
+SRD_PRIV int srd_log(int loglevel, const char *format, ...) G_GNUC_PRINTF(2, 3);
+#endif
+
+#define srd_spew(...)	srd_log(SRD_LOG_SPEW, __VA_ARGS__)
+#define srd_dbg(...)	srd_log(SRD_LOG_DBG,  __VA_ARGS__)
+#define srd_info(...)	srd_log(SRD_LOG_INFO, __VA_ARGS__)
+#define srd_warn(...)	srd_log(SRD_LOG_WARN, __VA_ARGS__)
+#define srd_err(...)	srd_log(SRD_LOG_ERR,  __VA_ARGS__)
+
+/* type_decoder.c */
+SRD_PRIV PyObject *srd_Decoder_type_new(void);
+
+/* type_logic.c */
+SRD_PRIV PyObject *srd_logic_type_new(void);
 
 /* module_sigrokdecode.c */
 PyMODINIT_FUNC PyInit_sigrokdecode(void);
 
 /* util.c */
-SRD_PRIV int py_attr_as_str(const PyObject *py_obj, const char *attr,
-        char **outstr);
-SRD_PRIV int py_dictitem_as_str(const PyObject *py_obj, const char *key,
-        char **outstr);
-SRD_PRIV int py_str_as_str(const PyObject *py_str, char **outstr);
-SRD_PRIV int py_strseq_to_char(const PyObject *py_strseq, char ***outstr);
+SRD_PRIV PyObject *py_import_by_name(const char *name);
+SRD_PRIV int py_attr_as_str(PyObject *py_obj, const char *attr, char **outstr);
+SRD_PRIV int py_dictitem_as_str(PyObject *py_obj, const char *key, char **outstr);
+SRD_PRIV int py_str_as_str(PyObject *py_str, char **outstr);
+SRD_PRIV int py_strseq_to_char(PyObject *py_strseq, char ***out_strv);
+SRD_PRIV GVariant *py_obj_to_variant(PyObject *py_obj);
 
 /* exception.c */
-SRD_PRIV void srd_exception_catch(const char *format, ...);
+#if defined(G_OS_WIN32) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 4))
+/*
+ * On MinGW, we need to specify the gnu_printf format flavor or GCC
+ * will assume non-standard Microsoft printf syntax.
+ */
+SRD_PRIV void srd_exception_catch(const char *format, ...)
+		__attribute__((__format__ (__gnu_printf__, 1, 2)));
+#else
+SRD_PRIV void srd_exception_catch(const char *format, ...) G_GNUC_PRINTF(1, 2);
+#endif
 
 #endif
