@@ -1,3 +1,12 @@
+libsigrokdecode (0.4.0-1) unstable; urgency=medium
+
+  * New upstream release.
+    + Change the package name from libsigrokdecode2 to libsigrokdecode3
+      due to an upstream SO name change.
+  * Standards-Version: 3.9.8 (no changes required).
+
+ -- Aaron Brady <aaron@insom.me.uk>  Sun, 11 Dec 2016 17:37:32 -0500
+
 libsigrokdecode (0.3.0-1) unstable; urgency=medium
 
   * New upstream release.
