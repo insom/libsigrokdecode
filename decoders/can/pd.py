@@ -20,6 +20,9 @@
 
 import sigrokdecode as srd
 
+class SamplerateError(Exception):
+    pass
+
 class Decoder(srd.Decoder):
     api_version = 2
     id = 'can'
@@ -54,6 +57,11 @@ class Decoder(srd.Decoder):
         ('ack-delimiter', 'ACK delimiter'),
         ('stuff-bit', 'Stuff bit'),
         ('warnings', 'Human-readable warnings'),
+        ('bit', 'Bit'),
+    )
+    annotation_rows = (
+        ('bits', 'Bits', (15, 17)),
+        ('fields', 'Fields', tuple(range(15)) + (16,)),
     )
 
     def __init__(self, **kwargs):
@@ -112,8 +120,6 @@ class Decoder(srd.Decoder):
             return False
 
         # Stuff bit. Keep it in self.rawbits, but drop it from self.bits.
-        self.putx([15, ['Stuff bit: %d' % self.rawbits[-1],
-                        'SB: %d' % self.rawbits[-1], 'SB']])
         self.bits.pop() # Drop last bit.
         return True
 
@@ -302,14 +308,13 @@ class Decoder(srd.Decoder):
         # Get the index of the current CAN frame bit (without stuff bits).
         bitnum = len(self.bits) - 1
 
-        # For debugging.
-        # self.putx([0, ['Bit %d (CAN bit %d): %d' % \
-        #           (self.curbit, bitnum, can_rx)]])
-
         # If this is a stuff bit, remove it from self.bits and ignore it.
         if self.is_stuff_bit():
+            self.putx([15, [str(can_rx)]])
             self.curbit += 1 # Increase self.curbit (bitnum is not affected).
             return
+        else:
+            self.putx([17, [str(can_rx)]])
 
         # Bit 0: Start of frame (SOF) bit
         if bitnum == 0:
@@ -358,8 +363,8 @@ class Decoder(srd.Decoder):
         self.curbit += 1
 
     def decode(self, ss, es, data):
-        if self.samplerate is None:
-            raise Exception("Cannot decode without samplerate.")
+        if not self.samplerate:
+            raise SamplerateError('Cannot decode without samplerate.')
         for (self.samplenum, pins) in data:
 
             (can_rx,) = pins
@@ -376,6 +381,3 @@ class Decoder(srd.Decoder):
                 if not self.reached_bit(self.curbit):
                     continue
                 self.handle_bit(can_rx)
-            else:
-                raise Exception("Invalid state: %s" % self.state)
-

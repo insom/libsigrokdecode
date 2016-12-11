@@ -27,18 +27,18 @@ Distro packagers should only use released tarballs (no git snapshots).
 Requirements
 ------------
 
- - git
- - gcc (>= 4.0)
+ - git (only needed when building from git)
+ - gcc (>= 4.0) or clang
  - make
- - autoconf >= 2.63
- - automake >= 1.11
- - libtool
+ - autoconf >= 2.63 (only needed when building from git)
+ - automake >= 1.11 (only needed when building from git)
+ - libtool (only needed when building from git)
  - pkg-config >= 0.22
- - libglib >= 2.24.0
+ - libglib >= 2.28.0
  - Python >= 3.2
  - check >= 0.9.4 (optional, only needed to run unit tests)
- - libsigrok >= 0.3.0 (optional, only needed for the developer PD tests)
- - python3-coverage (optional, only needed for the developer PD tests)
+ - doxygen (optional, only needed for the C API docs)
+ - graphviz (optional, only needed for the C API docs)
 
 
 Building and installing
@@ -82,13 +82,10 @@ the library as a whole is licensed under the terms of the GPLv3+.
 Please see the individual source files for the full list of copyright holders.
 
 
-Mailing lists
--------------
-
-There are two mailing lists for sigrok/libsigrokdecode:
+Mailing list
+------------
 
  https://lists.sourceforge.net/lists/listinfo/sigrok-devel
- https://lists.sourceforge.net/lists/listinfo/sigrok-commits
 
 
 IRC

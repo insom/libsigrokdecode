@@ -1,7 +1,7 @@
 ##
 ## This file is part of the libsigrokdecode project.
 ##
-## Copyright (C) 2012-2013 Uwe Hermann <uwe@hermann-uwe.de>
+## Copyright (C) 2012-2015 Uwe Hermann <uwe@hermann-uwe.de>
 ##
 ## This program is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -36,10 +36,11 @@ Packet:
  - 'IR TDO': Bitstring that was clocked out of the IR register.
  - 'DR TDI': Bitstring that was clocked into the DR register.
  - 'DR TDO': Bitstring that was clocked out of the DR register.
- - ...
 
-All bitstrings are a sequence of '1' and '0' characters. The right-most
-character in the bitstring is the LSB. Example: '01110001' (1 is LSB).
+All bitstrings are a list consisting of two items. The first is a sequence
+of '1' and '0' characters (the right-most character is the LSB. Example:
+'01110001', where 1 is the LSB). The second item is a list of ss/es values
+for each bit that is in the bitstring.
 '''
 
 jtag_states = [
@@ -73,7 +74,19 @@ class Decoder(srd.Decoder):
         {'id': 'srst', 'name': 'SRST#', 'desc': 'System reset'},
         {'id': 'rtck', 'name': 'RTCK',  'desc': 'Return clock signal'},
     )
-    annotations = tuple([tuple([s.lower(), s]) for s in jtag_states])
+    annotations = tuple([tuple([s.lower(), s]) for s in jtag_states]) + ( \
+        ('bit-tdi', 'Bit (TDI)'),
+        ('bit-tdo', 'Bit (TDO)'),
+        ('bitstring-tdi', 'Bitstring (TDI)'),
+        ('bitstring-tdo', 'Bitstring (TDO)'),
+    )
+    annotation_rows = (
+        ('bits-tdi', 'Bits (TDI)', (16,)),
+        ('bits-tdo', 'Bits (TDO)', (17,)),
+        ('bitstrings-tdi', 'Bitstring (TDI)', (18,)),
+        ('bitstrings-tdo', 'Bitstring (TDO)', (19,)),
+        ('states', 'States', tuple(range(15 + 1))),
+    )
 
     def __init__(self, **kwargs):
         # self.state = 'TEST-LOGIC-RESET'
@@ -83,10 +96,14 @@ class Decoder(srd.Decoder):
         self.oldtck = -1
         self.bits_tdi = []
         self.bits_tdo = []
+        self.bits_samplenums_tdi = []
+        self.bits_samplenums_tdo = []
         self.samplenum = 0
         self.ss_item = self.es_item = None
+        self.ss_bitstring = self.es_bitstring = None
         self.saved_item = None
         self.first = True
+        self.first_bit = True
 
     def start(self):
         self.out_python = self.register(srd.OUTPUT_PYTHON)
@@ -97,6 +114,12 @@ class Decoder(srd.Decoder):
 
     def putp(self, data):
         self.put(self.ss_item, self.es_item, self.out_python, data)
+
+    def putx_bs(self, data):
+        self.put(self.ss_bitstring, self.es_bitstring, self.out_ann, data)
+
+    def putp_bs(self, data):
+        self.put(self.ss_bitstring, self.es_bitstring, self.out_python, data)
 
     def advance_state_machine(self, tms):
         self.oldstate = self.state
@@ -139,55 +162,73 @@ class Decoder(srd.Decoder):
         elif self.state == 'UPDATE-IR':
             self.state = 'SELECT-DR-SCAN' if (tms) else 'RUN-TEST/IDLE'
 
-        else:
-            raise Exception('Invalid state: %s' % self.state)
-
     def handle_rising_tck_edge(self, tdi, tdo, tck, tms):
         # Rising TCK edges always advance the state machine.
         self.advance_state_machine(tms)
 
-        if self.first == True:
+        if self.first:
             # Save the start sample and item for later (no output yet).
             self.ss_item = self.samplenum
             self.first = False
-            self.saved_item = self.state
         else:
             # Output the saved item (from the last CLK edge to the current).
             self.es_item = self.samplenum
-            # Output the state we just switched to.
-            self.putx([jtag_states.index(self.state), [self.state]])
+            # Output the old state (from last rising TCK edge to current one).
+            self.putx([jtag_states.index(self.oldstate), [self.oldstate]])
             self.putp(['NEW STATE', self.state])
-            self.ss_item = self.samplenum
-            self.saved_item = self.state
 
-        # If we went from SHIFT-IR to SHIFT-IR, or SHIFT-DR to SHIFT-DR,
-        # collect the current TDI/TDO values (upon rising TCK edge).
-        if self.state.startswith('SHIFT-') and self.oldstate == self.state:
+        # Upon SHIFT-IR/SHIFT-DR collect the current TDI/TDO values.
+        if self.state.startswith('SHIFT-'):
+            if self.first_bit:
+                self.ss_bitstring = self.samplenum
+                self.first_bit = False
+            else:
+                self.putx([16, [str(self.bits_tdi[0])]])
+                self.putx([17, [str(self.bits_tdo[0])]])
+                # Use self.samplenum as ES of the previous bit.
+                self.bits_samplenums_tdi[0][1] = self.samplenum
+                self.bits_samplenums_tdo[0][1] = self.samplenum
+
             self.bits_tdi.insert(0, tdi)
             self.bits_tdo.insert(0, tdo)
-            # TODO: ANN/PROTO output.
-            # self.putx([0, ['TDI add: ' + str(tdi)]])
-            # self.putp([0, ['TDO add: ' + str(tdo)]])
+
+            # Use self.samplenum as SS of the current bit.
+            self.bits_samplenums_tdi.insert(0, [self.samplenum, -1])
+            self.bits_samplenums_tdo.insert(0, [self.samplenum, -1])
 
         # Output all TDI/TDO bits if we just switched from SHIFT-* to EXIT1-*.
         if self.oldstate.startswith('SHIFT-') and \
            self.state.startswith('EXIT1-'):
 
+            self.es_bitstring = self.samplenum
+
             t = self.state[-2:] + ' TDI'
             b = ''.join(map(str, self.bits_tdi))
             h = ' (0x%x' % int('0b' + b, 2) + ')'
             s = t + ': ' + b + h + ', ' + str(len(self.bits_tdi)) + ' bits'
-            # self.putx([0, [s]])
-            # self.putp([t, b])
+            self.putx_bs([18, [s]])
+            self.bits_samplenums_tdi[0][1] = self.samplenum # ES of last bit.
+            self.putp_bs([t, [b, self.bits_samplenums_tdi]])
+            self.putx([16, [str(self.bits_tdi[0])]]) # Last bit.
             self.bits_tdi = []
+            self.bits_samplenums_tdi = []
 
             t = self.state[-2:] + ' TDO'
             b = ''.join(map(str, self.bits_tdo))
             h = ' (0x%x' % int('0b' + b, 2) + ')'
             s = t + ': ' + b + h + ', ' + str(len(self.bits_tdo)) + ' bits'
-            # self.putx([0, [s]])
-            # self.putp([t, b])
+            self.putx_bs([19, [s]])
+            self.bits_samplenums_tdo[0][1] = self.samplenum # ES of last bit.
+            self.putp_bs([t, [b, self.bits_samplenums_tdo]])
+            self.putx([17, [str(self.bits_tdo[0])]]) # Last bit.
             self.bits_tdo = []
+            self.bits_samplenums_tdo = []
+
+            self.first_bit = True
+
+            self.ss_bitstring = self.samplenum
+
+        self.ss_item = self.samplenum
 
     def decode(self, ss, es, data):
         for (self.samplenum, pins) in data:
@@ -210,11 +251,7 @@ class Decoder(srd.Decoder):
             # Store start/end sample for later usage.
             self.ss, self.es = ss, es
 
-            # self.putx([0, ['tdi:%s, tdo:%s, tck:%s, tms:%s' \
-            #                % (tdi, tdo, tck, tms)]])
-
             if (self.oldtck == 0 and tck == 1):
                 self.handle_rising_tck_edge(tdi, tdo, tck, tms)
 
             self.oldtck = tck
-

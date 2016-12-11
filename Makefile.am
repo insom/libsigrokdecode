@@ -18,7 +18,20 @@
 ## Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 ##
 
-ACLOCAL_AMFLAGS = -I autostuff
+ACLOCAL_AMFLAGS = -I m4
+AM_LIBTOOLFLAGS = --silent
+GNUMAKEFLAGS = --no-print-directory
+
+DECODERS_DIR = $(pkgdatadir)/decoders
+# Do not hard-code the decoders location on Windows.
+if WIN32
+AM_CPPFLAGS =
+else
+AM_CPPFLAGS = -DDECODERS_DIR='"$(DECODERS_DIR)"'
+endif
+
+# The tests CFLAGS are a superset of the libsigrokdecode CFLAGS.
+AM_CFLAGS = $(SRD_EXTRA_CFLAGS) $(SRD_WFLAGS) $(TESTS_CFLAGS)
 
 lib_LTLIBRARIES = libsigrokdecode.la
 
@@ -36,12 +49,11 @@ libsigrokdecode_la_SOURCES = \
 	error.c \
 	version.c
 
-libsigrokdecode_la_CPPFLAGS = $(CPPFLAGS_PYTHON) \
-	-DDECODERS_DIR='"$(DECODERS_DIR)"'
-libsigrokdecode_la_LDFLAGS = $(SRD_LIB_LDFLAGS) $(LDFLAGS_PYTHON)
+libsigrokdecode_la_LIBADD = $(SRD_EXTRA_LIBS) $(LIBSIGROKDECODE_LIBS)
+libsigrokdecode_la_LDFLAGS = -version-info $(SRD_LIB_VERSION) -no-undefined
 
-library_includedir = $(includedir)/libsigrokdecode
-library_include_HEADERS = libsigrokdecode.h version.h
+pkginclude_HEADERS = libsigrokdecode.h
+nodist_pkginclude_HEADERS = version.h
 noinst_HEADERS = libsigrokdecode-internal.h
 
 pkgconfigdir = $(libdir)/pkgconfig
@@ -50,35 +62,28 @@ pkgconfig_DATA = libsigrokdecode.pc
 EXTRA_DIST = Doxyfile HACKING contrib/sigrok-logo-notext.png
 
 if HAVE_CHECK
-TESTS = tests/check_main
+TESTS = tests/main
 check_PROGRAMS = ${TESTS}
-tests_check_main_SOURCES = \
-	libsigrokdecode.h \
-	tests/lib.h \
-	tests/check_main.c \
-	tests/check_core.c \
-	tests/check_decoder.c \
-	tests/check_inst.c \
-	tests/check_session.c
-tests_check_main_CFLAGS = @check_CFLAGS@
-tests_check_main_LDADD = $(top_builddir)/libsigrokdecode.la @check_LIBS@
-tests_check_main_CPPFLAGS = $(CPPFLAGS_PYTHON) \
-	-DDECODERS_DIR='"$(abs_top_builddir)/decoders"'
 endif
 
-if BUILD_RUNTC
-noinst_PROGRAMS = tests/runtc
-tests_runtc_SOURCES = tests/runtc.c
-tests_runtc_CPPFLAGS = $(CPPFLAGS_PYTHON) $(LIBSIGROK_CFLAGS) \
-	-DDECODERS_DIR='"$(abs_top_builddir)/decoders"'
-tests_runtc_LDFLAGS = -L$(top_builddir) $(LIBSIGROK_LIBS) $(LDFLAGS_PYTHON) -lsigrokdecode
-endif
+tests_main_SOURCES = \
+	libsigrokdecode.h \
+	tests/lib.h \
+	tests/main.c \
+	tests/core.c \
+	tests/decoder.c \
+	tests/inst.c \
+	tests/session.c
+
+tests_main_CPPFLAGS = -DDECODERS_TESTDIR='"$(abs_top_srcdir)/decoders"'
+tests_main_LDADD = libsigrokdecode.la $(SRD_EXTRA_LIBS) $(TESTS_LIBS)
 
 MAINTAINERCLEANFILES = ChangeLog
 
-.PHONY: ChangeLog
+.PHONY: ChangeLog install-decoders
+
 ChangeLog:
-	git --git-dir $(top_srcdir)/.git log > ChangeLog || touch ChangeLog
+	git --git-dir '$(top_srcdir)/.git' log >$@ || touch $@
 
 dist-hook: ChangeLog
 	$(MKDIR_P) $(distdir)/tools

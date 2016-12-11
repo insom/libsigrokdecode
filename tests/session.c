@@ -18,22 +18,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#include "../libsigrokdecode.h" /* First, to avoid compiler warning. */
-#include "../libsigrokdecode-internal.h"
+#include <config.h>
+#include <libsigrokdecode-internal.h> /* First, to avoid compiler warning. */
+#include <libsigrokdecode.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <check.h>
 #include "lib.h"
-
-static void setup(void)
-{
-	/* Silence libsigrokdecode while the unit tests run. */
-	srd_log_loglevel_set(SRD_LOG_NONE);
-}
-
-static void teardown(void)
-{
-}
 
 /*
  * Check whether srd_session_new() works.
@@ -214,7 +205,7 @@ START_TEST(test_session_metadata_set_bogus)
 	srd_init(NULL);
 	srd_session_new(&sess);
 
-	/* Incorrect gvariant type (currently only uint64 is used). */
+	/* Incorrect GVariant type (currently only uint64 is used). */
 	conf_check_fail_str(sess, SRD_CONF_SAMPLERATE, "");
 	conf_check_fail_str(sess, SRD_CONF_SAMPLERATE, "Foo");
 
@@ -242,7 +233,7 @@ Suite *suite_session(void)
 	s = suite_create("session");
 
 	tc = tcase_create("new_destroy");
-	tcase_add_checked_fixture(tc, setup, teardown);
+	tcase_add_checked_fixture(tc, srdtest_setup, srdtest_teardown);
 	tcase_add_test(tc, test_session_new);
 	tcase_add_test(tc, test_session_new_bogus);
 	tcase_add_test(tc, test_session_new_multiple);
@@ -251,7 +242,7 @@ Suite *suite_session(void)
 	suite_add_tcase(s, tc);
 
 	tc = tcase_create("config");
-	tcase_add_checked_fixture(tc, setup, teardown);
+	tcase_add_checked_fixture(tc, srdtest_setup, srdtest_teardown);
 	tcase_add_test(tc, test_session_metadata_set);
 	tcase_add_test(tc, test_session_metadata_set_bogus);
 	suite_add_tcase(s, tc);

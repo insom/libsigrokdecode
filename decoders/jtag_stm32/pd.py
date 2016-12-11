@@ -1,7 +1,7 @@
 ##
 ## This file is part of the libsigrokdecode project.
 ##
-## Copyright (C) 2012 Uwe Hermann <uwe@hermann-uwe.de>
+## Copyright (C) 2012-2015 Uwe Hermann <uwe@hermann-uwe.de>
 ##
 ## This program is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -34,6 +34,23 @@ ir = {
 
 # ARM Cortex-M3 r1p1-01rel0 ID code
 cm3_idcode = 0x3ba00477
+
+# http://infocenter.arm.com/help/topic/com.arm.doc.ddi0413c/Chdjibcg.html
+cm3_idcode_ver = {
+    0x3: 'JTAG-DP',
+    0x2: 'SW-DP',
+}
+cm3_idcode_part = {
+    0xba00: 'JTAG-DP',
+    0xba10: 'SW-DP',
+}
+
+# http://infocenter.arm.com/help/topic/com.arm.doc.faqs/ka14408.html
+jedec_id = {
+    5: {
+        0x3b: 'ARM Ltd.',
+    },
+}
 
 # JTAG ID code in the STM32F10xxx BSC (boundary scan) TAP
 jtag_idcode = {
@@ -74,7 +91,6 @@ apb_ap_reg = {
     0xfc: ['IDR', 'Identification register'],
 }
 
-# TODO: All start/end sample values in self.put() calls are bogus.
 # TODO: Split off generic ARM/Cortex-M3 parts into another protocol decoder?
 
 # Bits[31:28]: Version (here: 0x3)
@@ -82,16 +98,16 @@ apb_ap_reg = {
 # Bits[27:12]: Part number (here: 0xba00)
 #              JTAG-DP: 0xba00, SW-DP: 0xba10
 # Bits[11:1]:  JEDEC (JEP-106) manufacturer ID (here: 0x23b)
-#              Bits[11:8]: Continuation code ('ARM Limited': 0x04)
-#              Bits[7:1]: Identity code ('ARM Limited': 0x3b)
+#              Bits[11:8]: Continuation code ('ARM Ltd.': 0x04)
+#              Bits[7:1]: Identity code ('ARM Ltd.': 0x3b)
 # Bits[0:0]:   Reserved (here: 0x1)
 def decode_device_id_code(bits):
     id_hex = '0x%x' % int('0b' + bits, 2)
-    ver =    '0x%x' % int('0b' + bits[-32:-28], 2)
-    part =   '0x%x' % int('0b' + bits[-28:-12], 2)
-    manuf =  '0x%x' % int('0b' + bits[-12:-1], 2)
-    res =    '0x%x' % int('0b' + bits[-1], 2)
-    return (id_hex, ver, part, manuf, res)
+    ver = cm3_idcode_ver.get(int('0b' + bits[-32:-28], 2), 'UNKNOWN')
+    part = cm3_idcode_part.get(int('0b' + bits[-28:-12], 2), 'UNKNOWN')
+    ids = jedec_id.get(int('0b' + bits[-12:-8], 2) + 1, {})
+    manuf = ids.get(int('0b' + bits[-7:-1], 2), 'UNKNOWN')
+    return (id_hex, manuf, ver, part)
 
 # DPACC is used to access debug port registers (CTRL/STAT, SELECT, RDBUFF).
 # APACC is used to access all Access Port (AHB-AP) registers.
@@ -128,62 +144,88 @@ class Decoder(srd.Decoder):
     inputs = ['jtag']
     outputs = ['jtag_stm32']
     annotations = (
-        ('text', 'Human-readable text'),
+        ('item', 'Item'),
+        ('field', 'Field'),
+        ('command', 'Command'),
+        ('warning', 'Warning'),
+    )
+    annotation_rows = (
+        ('items', 'Items', (0,)),
+        ('fields', 'Fields', (1,)),
+        ('commands', 'Commands', (2,)),
+        ('warnings', 'Warnings', (3,)),
     )
 
     def __init__(self, **kwargs):
         self.state = 'IDLE'
-        # self.state = 'BYPASS'
+        self.samplenums = None
 
     def start(self):
         self.out_ann = self.register(srd.OUTPUT_ANN)
 
+    def putx(self, data):
+        self.put(self.ss, self.es, self.out_ann, data)
+
+    def putf(self, s, e, data):
+        self.put(self.samplenums[s][0], self.samplenums[e][1], self.out_ann, data)
+
     def handle_reg_bypass(self, cmd, bits):
-        # TODO
-        self.put(self.ss, self.es, self.out_ann, [0, ['BYPASS: ' + bits]])
+        self.putx([0, ['BYPASS: ' + bits]])
 
     def handle_reg_idcode(self, cmd, bits):
-        # TODO
         # IDCODE is a read-only register which is always accessible.
-        # IR == IDCODE: The device ID code is shifted out via DR next.
-        self.put(self.ss, self.es, self.out_ann,
-                 [0, ['IDCODE: %s (ver=%s, part=%s, manuf=%s, res=%s)' % \
-                 decode_device_id_code(bits)]])
+        # IR == IDCODE: The 32bit device ID code is shifted out via DR next.
+
+        id_hex, manuf, ver, part = decode_device_id_code(bits[:-1])
+        cc = '0x%x' % int('0b' + bits[:-1][-12:-8], 2)
+        ic = '0x%x' % int('0b' + bits[:-1][-7:-1], 2)
+
+        self.putf(0, 0, [1, ['Reserved (BS TAP)', 'BS', 'B']])
+        self.putf(1, 1, [1, ['Reserved', 'Res', 'R']])
+        self.putf(9, 12, [0, ['Continuation code: %s' % cc, 'CC', 'C']])
+        self.putf(2, 8, [0, ['Identity code: %s' % ic, 'IC', 'I']])
+        self.putf(2, 12, [1, ['Manufacturer: %s' % manuf, 'Manuf', 'M']])
+        self.putf(13, 28, [1, ['Part: %s' % part, 'Part', 'P']])
+        self.putf(29, 32, [1, ['Version: %s' % ver, 'Version', 'V']])
+
+        self.ss = self.samplenums[1][0]
+        self.putx([2, ['IDCODE: %s (%s: %s/%s)' % \
+                  decode_device_id_code(bits[:-1])]])
 
     def handle_reg_dpacc(self, cmd, bits):
-        # self.put(self.ss, self.es, self.out_ann,
-        #          [0, ['DPACC/%s: %s' % (cmd, bits)]])
+        bits = bits[:-1]
         s = data_in('DPACC', bits) if (cmd == 'DR TDI') else data_out(bits)
-        self.put(self.ss, self.es, self.out_ann, [0, [s]])
+        self.putx([2, [s]])
 
     def handle_reg_apacc(self, cmd, bits):
-        # self.put(self.ss, self.es, self.out_ann,
-        #          [0, ['APACC/%s: %s' % (cmd, bits)]])
+        bits = bits[:-1]
         s = data_in('APACC', bits) if (cmd == 'DR TDI') else data_out(bits)
-        self.put(self.ss, self.es, self.out_ann, [0, [s]])
+        self.putx([2, [s]])
 
     def handle_reg_abort(self, cmd, bits):
+        bits = bits[:-1]
         # Bits[31:1]: reserved. Bit[0]: DAPABORT.
         a = '' if (bits[0] == '1') else 'No '
         s = 'DAPABORT = %s: %sDAP abort generated' % (bits[0], a)
-        self.put(self.ss, self.es, self.out_ann, [0, [s]])
+        self.putx([2, [s]])
 
         # Warn if DAPABORT[31:1] contains non-zero bits.
         if (bits[:-1] != ('0' * 31)):
-            self.put(self.ss, self.es, self.out_ann,
-                     [0, ['WARNING: DAPABORT[31:1] reserved!']])
+            self.putx([3, ['WARNING: DAPABORT[31:1] reserved!']])
 
     def handle_reg_unknown(self, cmd, bits):
-        self.put(self.ss, self.es, self.out_ann,
-                 [0, ['Unknown instruction: ' % bits]]) # TODO
+        bits = bits[:-1]
+        self.putx([2, ['Unknown instruction: %s' % bits]])
 
     def decode(self, ss, es, data):
-        # Assumption: The right-most char in the 'val' bitstring is the LSB.
         cmd, val = data
 
         self.ss, self.es = ss, es
 
-        # self.put(self.ss, self.es, self.out_ann, [0, [cmd + ' / ' + val]])
+        if cmd != 'NEW STATE':
+            # The right-most char in the 'val' bitstring is the LSB.
+            val, self.samplenums = val
+            self.samplenums.reverse()
 
         # State machine
         if self.state == 'IDLE':
@@ -191,11 +233,15 @@ class Decoder(srd.Decoder):
             if cmd != 'IR TDI':
                 return
             # Switch to the state named after the instruction, or 'UNKNOWN'.
-            # Ignore bits other than IR[3:0]. While the IR register is only
-            # 4 bits in size, some programs (e.g. OpenOCD) might fill in a
-            # few more (dummy) bits. OpenOCD makes IR at least 8 bits long.
-            self.state = ir.get(val[-4:], ['UNKNOWN', 0])[0]
-            self.put(self.ss, self.es, self.out_ann, [0, ['IR: ' + self.state]])
+            # The STM32F10xxx has two serially connected JTAG TAPs, the
+            # boundary scan tap (5 bits) and the Cortex-M3 TAP (4 bits).
+            # See UM 31.5 "STM32F10xxx JTAG TAP connection" for details.
+            self.state = ir.get(val[:-1][-4:], ['UNKNOWN', 0])[0]
+            bstap_ir = ir.get(val[:-1][:4], ['UNKNOWN', 0])[0]
+            self.putf(5, 8, [1, ['IR (BS TAP): ' + bstap_ir]])
+            self.putf(1, 4, [1, ['IR (M3 TAP): ' + self.state]])
+            self.putf(0, 0, [1, ['Reserved (BS TAP)', 'BS', 'B']])
+            self.putx([2, ['IR: %s' % self.state]])
         elif self.state == 'BYPASS':
             # Here we're interested in incoming bits (TDI).
             if cmd != 'DR TDI':
@@ -216,8 +262,5 @@ class Decoder(srd.Decoder):
                 return
             handle_reg = getattr(self, 'handle_reg_%s' % self.state.lower())
             handle_reg(cmd, val)
-            if cmd == 'DR TDO': # TODO: Assumes 'DR TDI' comes before 'DR TDO'
+            if cmd == 'DR TDO': # Assumes 'DR TDI' comes before 'DR TDO'.
                 self.state = 'IDLE'
-        else:
-            raise Exception('Invalid state: %s' % self.state)
-

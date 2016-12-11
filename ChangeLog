@@ -1,8 +1,1845 @@
-commit 788b2c6183554d8d985c2ab59cd1d5d3575009dd
+commit 46fe9a4ab1327b03809fe3e5e288773f3f93e5ea
 Author: Uwe Hermann <uwe@hermann-uwe.de>
-Date:   Tue May 6 23:08:09 2014 +0200
+Date:   Fri Jan 29 23:36:58 2016 +0100
 
-    Doxyfile: Set version to 0.3.0.
+    Doxyfile: Set version to 0.4.0.
+
+commit b144d63507bed89c551e3fdd74fe106c4d264fc2
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Fri Jan 29 23:32:37 2016 +0100
+
+    Bump libtool version (not package version) to 3:0:0.
+    
+    The last release (0.3.0) had the libtool version (current:revision:age)
+    set to 2:0:0. Since this release removes and changes interfaces, the new
+    version is 3:0:0.
+    
+    http://www.gnu.org/software/libtool/manual/libtool.html#Updating-version-info
+    
+    This changes the library filename (e.g. on Linux) from
+    libsigrokdecode.so.2.0.0 to libsigrokdecode.so.3.0.0, the SONAME
+    (+symlink) becomes libsigrokdecode.so.3.
+
+commit a87daa42b8f9a223b6af4a1b693e4214fc802ff4
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Fri Jan 29 21:25:18 2016 +0100
+
+    NEWS: Update for upcoming 0.4.0 release.
+
+commit 7bee21e85c0cc7ada8ce54b8ff0fa759d084a7c5
+Author: Martijn van Buul <martijn.van.buul@gmail.com>
+Date:   Tue Jan 26 22:13:26 2016 +0100
+
+    configure.ac: Also check for Python 3.5.
+    
+    This fixes bug #739.
+
+commit 96a044da40fd33e6f3273f0052fdd12f54770150
+Author: Daniel Thompson <daniel@redfelineninja.org.uk>
+Date:   Fri Jan 22 08:29:09 2016 +0000
+
+    uart: Optimize handling of samples when tx and rx are both idle
+    
+    Re-enable the fast path for identical samples but only when both
+    pins are waiting for the start bit. For sparse data sets (I tested
+    UT61E capture log) the optimization results in a >4x decode
+    improvement.
+
+commit 27c69645218c7cc88c991c8c18b585ffd092acc0
+Author: Petteri Aimonen <jpa@git.mail.kapsi.fi>
+Date:   Sun Jan 10 19:23:55 2016 +0200
+
+    arm_itm: Use objdump instead of addr2line.
+    
+    This improves speed and fixes bug 564. Code is somewhat
+    of a copypaste from the arm_etm counterpart, but there
+    are enough differences that it is easier to keep separate
+    copy of the objdump parsing in each.
+
+commit 669f30f4b1035a8eb0a5350246a3bc50cf8b376d
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Fri Dec 25 16:28:23 2015 +0100
+
+    usb_power_delivery: Raise SamplerateError instead of Exception.
+    
+    (for consistency with the other PDs)
+
+commit 2f37032807e19bc93b7f3223e1568db46318790c
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Wed Dec 23 20:01:48 2015 +0100
+
+    Use self.out_binary naming consistently across all PDs.
+
+commit 2824e81140d3a8e37464f758cf67f50f2f7afca7
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Wed Dec 23 20:00:45 2015 +0100
+
+    Use a Python list (not tuple) for OUT_BINARY.
+    
+    This is more consistent with annotation syntax and looks slightly
+    better in most cases.
+
+commit 0679f5bf9b2334deb75243abb80ef7e0d0472c18
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sun Dec 20 17:49:31 2015 +0100
+
+    Drop obsolete support for annotation tuples (only support lists).
+    
+    None of the PDs use this.
+
+commit 91ae892dcb8637961fc52cc8b528e1f77bec3a53
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Fri Dec 18 17:42:16 2015 +0100
+
+    em4100: Simplify the code a bit.
+
+commit 13090f246f88ecea35afd43e3ada0dda061f6994
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Fri Dec 18 17:29:10 2015 +0100
+
+    em4100: Use ss/es naming for consistency across PDs.
+
+commit 1a782fad8a1e8addeb1f27e221b286ffe2b2e30a
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Fri Dec 18 17:21:47 2015 +0100
+
+    em4100: Eliminate some unnecessary int()s.
+
+commit 428e40cb08410595126f245e5379cd3104747937
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Fri Dec 18 18:14:06 2015 +0100
+
+    em4100: Change annotation setup a bit, decode more protocol details.
+
+commit 8f26590799306bf7e13241c345adbf1fde811ec7
+Author: Benjamin Larsson <benjamin@southpole.se>
+Date:   Tue Dec 15 01:00:01 2015 +0100
+
+    Add RFID EM4100 protocol decoding
+
+commit 033e7d4db76f2e2a289d5567e9532f26201cfa74
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Wed Dec 16 18:14:30 2015 +0100
+
+    usb_power_delivery: Use "if not self.samplerate" form.
+    
+    Use the "if not self.samplerate" form, which catches both the case
+    where self.samplerate is None, as well as the case where it is 0.
+    
+    This is also consistent with all the other PDs.
+
+commit 89b9aaf771abd5642dc8acb2281af3bb66a9424f
+Author: Vincent Palatin <vpalatin@chromium.org>
+Date:   Wed Nov 25 09:19:58 2015 -0800
+
+    usb_power_delivery: convert double quotes to single quotes
+    
+    For consistency with other decoders, convert all the double quotes around
+    strings to single quotes.
+    
+    Signed-off-by: Vincent Palatin <vpalatin@chromium.org>
+
+commit 45883c6b54839988850d5fb3d6fdbedab0011ced
+Author: Marcus Comstedt <marcus@mc.pp.se>
+Date:   Fri Dec 4 22:36:17 2015 +0100
+
+    init: Don't let Python override signal handlers
+    
+    This fixes bug #461.
+
+commit 502acfc2c71a2bbc97d4d7597150cd479bead1ee
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Fri Dec 4 22:11:14 2015 +0100
+
+    usb*: Minor cosmetics.
+
+commit 1647db062c75b5058fbbd581438a25e76f17cde6
+Author: Stefan Brüns <stefan.bruens@rwth-aachen.de>
+Date:   Tue Dec 1 06:44:43 2015 +0100
+
+    usb_signalling: detect PREamble PID
+    
+    PID decoding is normally done in the packet layer, but the signalling
+    layer has to switch behaviour on detection of an PREamble PID.
+
+commit 9821622af021360a92334d1a6b465c8e3aab90b6
+Author: Stefan Brüns <stefan.bruens@rwth-aachen.de>
+Date:   Tue Dec 1 06:48:02 2015 +0100
+
+    usb_signalling: add signaling states needed after LS PREamble PID
+
+commit be0f8fee99fe939c50ed5d2483a924754788c0b3
+Author: Stefan Brüns <stefan.bruens@rwth-aachen.de>
+Date:   Tue Dec 1 05:53:32 2015 +0100
+
+    usb_{packet,request}: handle PREamble transmissions
+
+commit 831d893d4b9e4f76b5e645ee5e6fcfd4962ffa6a
+Author: Stefan Brüns <stefan.bruens@rwth-aachen.de>
+Date:   Mon Nov 30 00:35:11 2015 +0100
+
+    usb_signalling: fix SOP detection after an error condition
+    
+    If the oldsym is not set to 'J' before entering IDLE state, the SOP
+    detection will never trigger
+
+commit e655c0aa44ac56ff66ad98d30a97cf852bdf7048
+Author: Stefan Brüns <stefan.bruens@rwth-aachen.de>
+Date:   Mon Nov 30 00:00:03 2015 +0100
+
+    usb_packet: handle errors from usb_signalling
+    
+    If a packet had any errors, the usb_signalling PD will not send an EOP
+    but an ERR message. Wait for the next SOP in both cases.
+
+commit 72b2a50cc23388ba3568fc96deda79a7e39cbfc5
+Author: Stefan Brüns <stefan.bruens@rwth-aachen.de>
+Date:   Sun Nov 29 23:56:53 2015 +0100
+
+    usb_request: Handle transmission timeouts
+    
+    If a device or host did not receive a handshake 18 bit times after the
+    EOP, there was a transmission error and the host may repeat the
+    transmission
+
+commit 519092e31aa4f2288dd82d43719d5a88d4e465b9
+Author: Stefan Brüns <stefan.bruens@rwth-aachen.de>
+Date:   Fri Nov 13 07:15:36 2015 +0100
+
+    usb_signalling: add option to automatically set signalling speed
+    
+    In automatic mode, the bus is assumed to be in IDLE state. After a
+    RESET, the bus state is checked again.
+
+commit 13e813080ccf342e9577317400530335c5475764
+Author: Stefan Brüns <stefan.bruens@rwth-aachen.de>
+Date:   Fri Nov 13 05:39:10 2015 +0100
+
+    usb_signalling: decode RESET and Keep-Alive signalling conditions
+    
+    Resets are at least 10ms at the root hub downstream facing port and
+    2.5us at the device (root hub reset may be shortened by itermediate
+    hubs).
+    Keep-alive is a low-speed only signalling condition, as low-speed has no
+    SOFs to inhibit devices to enter suspend
+
+commit 6fbab493aaee26f9ecba0268261d1f3264339d9d
+Author: Stefan Brüns <stefan.bruens@rwth-aachen.de>
+Date:   Fri Nov 13 05:20:22 2015 +0100
+
+    usb_signalling: use explicit positions for packet start/end
+    
+    Instead of centering the block around the sampleposition, which shows
+    some visual glitches due to rounding, use the edge positions already
+    known. Remove unused halfbit symbol.
+
+commit 0f274b53a9c0c8a40cdb0ed41023705d99bc6c6c
+Author: Stefan Brüns <stefan.bruens@rwth-aachen.de>
+Date:   Fri Nov 13 04:55:56 2015 +0100
+
+    usb_signalling: handle symbol errors in EOP state
+    
+    Only SE0 and J are valid symbols during EOP
+
+commit bef4949d31076cf7dfdea5ed8bf7800bf3e2678d
+Author: Stefan Brüns <stefan.bruens@rwth-aachen.de>
+Date:   Fri Nov 13 04:52:53 2015 +0100
+
+    usb_signalling: remove unneeded syms array
+    
+    Do not call get_eop() from get_bit(), but directly issue the symbol. As
+    get_eop() is only called during the GET EOP state, the SE0 is implicit and
+    there is no need to save it into the syms array.
+
+commit ce780be23a64df70ac350c8584d484e72c00990e
+Author: Stefan Brüns <stefan.bruens@rwth-aachen.de>
+Date:   Fri Nov 13 04:20:54 2015 +0100
+
+    usb_signalling: remove unused ss_sop member
+
+commit 033d6221f3d0cd607bb11031a2764a293bf4bff1
+Author: Stefan Brüns <stefan.bruens@rwth-aachen.de>
+Date:   Fri Nov 13 04:11:37 2015 +0100
+
+    usb_signalling: detect bit stuffing errors
+    
+    More than six consecutive 1's are an error
+
+commit 56cc44ff1106e8e28d9242b6232552c501090ed4
+Author: Stefan Brüns <stefan.bruens@rwth-aachen.de>
+Date:   Fri Nov 13 04:05:24 2015 +0100
+
+    usb_signalling: consolidate symbol output
+    
+    No need to replicate the symbol formatting in several places
+
+commit 8c90d7bdf21f091bb8bf6a45fbb8602e406b10e4
+Author: Paul "LeoNerd" Evans <leonerd@leonerd.org.uk>
+Date:   Sun Nov 8 00:49:08 2015 +0000
+
+    spi: Add a 'TRANSFER' output type.
+
+commit 92a06d0b6bbe173257d7c76ed2318f5b35f65637
+Author: Paul "LeoNerd" Evans <leonerd@leonerd.org.uk>
+Date:   Sat Nov 7 23:39:59 2015 +0000
+
+    Fix documentation comment in SPI decoder
+
+commit 79065c6f7602f1f02399bcf45bb3ef0cb73587ae
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Nov 21 20:18:47 2015 +0100
+
+    usb_power_delivery: Minor typo and whitespace fixes.
+
+commit fddb311472d4458382418de3f091bd1b997d3a89
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Nov 21 19:35:15 2015 +0100
+
+    usb_power_delivery: Use the same license header format as other PDs.
+
+commit ced6589fc96e49c0fa69565c46e5cb4fb25459bc
+Author: Vincent Palatin <vpalatin@chromium.org>
+Date:   Thu May 29 06:51:13 2014 -0700
+
+    USB Power Delivery protocol decoder
+    
+    Decode and packetize the Biphase Mark Coding (aka differential Manchester)
+    as used in the Universal Serial Bus Power Delivery Specification Revision 2.0
+    v1.1, then decode the packet content.
+    
+    Signed-off-by: Vincent Palatin <vpalatin@chromium.org>
+
+commit a1497fa349673fb5cd2cb5b62dbc90160d7f9e49
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Nov 21 18:43:06 2015 +0100
+
+    spiflash: Fix incorrect 'inputs' field.
+    
+    (this PD is indeed stacked on top of SPI)
+
+commit 979d5dd08f33e90da58ef6bb76137693ed84693a
+Author: Paul "LeoNerd" Evans <leonerd@leonerd.org.uk>
+Date:   Tue Nov 3 14:02:11 2015 +0000
+
+    Initial attempt at MAX7219/MAX7221 decoder
+
+commit c63f5a875761cb83abfad7ede0615415cdc90c76
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Tue Nov 3 02:12:49 2015 +0100
+
+    srd_decoder_unload(): Remove PD from the internal list.
+    
+    This issue was discovered via the newly added unit tests.
+
+commit 1b6f39e39b9700a787db81268c4ae9cd0d3f1499
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Tue Nov 3 02:12:29 2015 +0100
+
+    tests/decoder.c: Add some srd_decoder_unload*() tests.
+
+commit 76a4498f3a1eb0ce3919c3ce72fad76f99049942
+Author: Elrond <elrond+sigrok.org@samba-tng.org>
+Date:   Wed Oct 21 16:17:19 2015 +0200
+
+    UART: Handle framing errors better
+    
+    1. Show Frame Error on the Start bit
+    2. Don't overwrite framing errors with (valid) start/stop bit info
+
+commit 943f9176255c63924fcf55c6ba8bad05e91d4923
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Tue Oct 6 22:42:52 2015 +0200
+
+    exception: Decorate catch function with format attribute
+
+commit 41d43a33fb4088889aba931cbdbc032263a6f397
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Tue Oct 6 21:08:36 2015 +0200
+
+    build: Require GLib 2.28.0
+    
+    This is needed for e.g. g_slist_free_full(), which incidentally
+    has been in use for a while already.
+
+commit e9dd2fea0514df9316a12bae191b810811fc9f01
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Tue Oct 6 22:30:14 2015 +0200
+
+    util: Factor out Python module load
+    
+    Create a utility function for loading a Python module by its name
+    in UTF-8.
+
+commit 6d67d057d13318deb0a11de2589b5442df389092
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Tue Oct 6 21:07:47 2015 +0200
+
+    decoder: Refactor loading code and plug leaks
+
+commit 201a85a8ea071d37f4fda2668c0a1c488d852f4e
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Mon Oct 5 01:53:43 2015 +0200
+
+    Python: Restrict code to stable ABI subset
+    
+    Limit usage of the Python C API to the stable ABI subset as defined
+    by PEP 384. This removes some type definitions and functions which
+    libsigrokdecode made use of. Convert all affected code to suitable
+    API alternatives. Also fix a few leaks that became apparent while
+    working on the code.
+    
+    The most visible change is that PyTypeObject is now an opaque type.
+    Thus, the custom Decoder and srd_logic types are now created on the
+    heap via an alternative API. Unfortunately, since tp_name is now
+    inaccessible, type names had to be removed from the log output.
+    
+    Stack traces after Python exceptions are now formatted by calling
+    into Python, since the trace object C API is no longer available.
+
+commit bd0e7d2e71e7a05b2bb0686a86a75b8fcb92fd54
+Author: Stefan Brüns <stefan.bruens@rwth-aachen.de>
+Date:   Sun Oct 4 00:43:38 2015 +0200
+
+    usb_request: USB transaction decoder and PCAP generator
+    
+    The new decoder stacks on top of the usb_packet PD. It adds one new
+    annotation row, and is able to save the decoded data as PCAP trace.
+    
+    It has been successfully tested against all traces in sigrok-dumps and
+    some more traces.
+
+commit 91a19cb31778ccb6db79c4d4d75d993d974ebae0
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Tue Oct 6 08:29:56 2015 +0200
+
+    usb_packet: Document CRC5 ERROR and CRC16 ERROR packets.
+
+commit 64b45b207121eeb9b0db7f71ba067f23fe7f7ea7
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Tue Oct 6 08:28:03 2015 +0200
+
+    usb_{signalling,packet}: Minor cosmetics.
+
+commit a241cfb6e1fbf1f7c85109a54e914672b633f5f3
+Author: Stefan Brüns <stefan.bruens@rwth-aachen.de>
+Date:   Wed Sep 30 00:24:24 2015 +0200
+
+    usb_signalling: Track USB symbol width to compensate frequency errors
+    
+    USB low/full speed allows for frequency tolerance of 1.5%/0.25%. At
+    maximum packet size (sync + PID + data + CRC16) of 12 bytes/1027 bytes
+    this amounts to 1.4 bits/20 bits, so the decoder has to lock to the
+    actual symbol frequency to avoid any symbol misdetections.
+    
+    The signal is sampled twice, once at the symbol center and once at
+    the expected edge position. Comparing the symbol at both positions gives
+    an indication if the current bit width is too low or too high. Adjust
+    accordingly.
+
+commit 0e3cb15e814f20b201709688ab4eaa6eee54dc40
+Author: Stefan Brüns <stefan.bruens@rwth-aachen.de>
+Date:   Thu Oct 1 00:12:29 2015 +0200
+
+    usb_packet: calculate and check CRC5/CRC16
+    
+    In case CRC validation fails, an crc5-err/crc16-err annotation is issued,
+    instead of crc5-ok/crc16-ok, and the error is noted in the annotation
+    text.
+
+commit d9673085e0f35f4cf7704f340ce56f954d7beab6
+Author: Roland Hieber <rohieb@rohieb.name>
+Date:   Sun Oct 4 23:04:02 2015 +0200
+
+    rfm12: fix small typo
+    
+    There is a small typo in the rfm12 protocol decoder that I just noticed:
+
+commit b480383d4605915f7b4cd8f14ccf62af9bf710f3
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Sat Oct 3 14:28:43 2015 +0200
+
+    tests: Do not reference parent directory in includes
+    
+    Rely on the compiler include path instead.
+
+commit 41bab68212533f4697ad378af574e06ea83e4fd9
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Sat Oct 3 14:21:01 2015 +0200
+
+    tests: Rename DECODERS_DIR to DECODERS_TESTDIR
+    
+    Avoid confusion resulting from using the same macro name for
+    different purposes.
+
+commit 583001b3f16795abd24278fbb2e5232a7ca27fb0
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Sat Oct 3 14:17:07 2015 +0200
+
+    build: Do not hard-code decoders location on Windows
+
+commit 40c6ac1d3fbded276dcbff23e8bc099896ab2fb5
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Sat Oct 3 13:18:09 2015 +0200
+
+    init: Also look for decoders in XDG data directories
+
+commit d8d409590ce21116d85800c0eb8be287817a0eed
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Sat Oct 3 11:40:33 2015 +0200
+
+    init: Simplify srd_decoder_searchpath_add()
+    
+    Don't mess with colon-separated search path strings -- instead,
+    simply prepend items to the sys.path list object. Also keep the
+    internal decoder path list in the same order as the items added
+    to sys.path.
+
+commit 750e122d2bcdf05e600112ffda431f97608db387
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Tue Sep 15 11:42:05 2015 +0200
+
+    jitter, pwm: Avoid Unicode string literals
+    
+    It seems the Python we ship along our Windows binaries does not
+    support u"..." strings, even though it's been a language feature
+    since Python 2. Remove the "u" prefix to avoid a syntax error.
+    
+    Also, consistently use format "%.1f" at all scales.
+    
+    This fixes bug #569.
+
+commit 544038d90e05c03f6f914c7771ee52dd85784ca8
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Sep 14 19:05:54 2015 +0200
+
+    can: Improve stuff bit annotation placement.
+
+commit d4a28d0fb6e1380590564be2b47ba3642130555b
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Sep 14 18:25:02 2015 +0200
+
+    can: Emit bit value annotations.
+
+commit c6bfbc0043089e006c684bcce609da50aadded81
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Sep 14 17:56:46 2015 +0200
+
+    Makefile.am: Shorten ChangeLog target a bit.
+
+commit ef3a66299ade1bc41090d0b6d24c21b6bcfad571
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Sun Sep 13 23:05:42 2015 +0200
+
+    log: Use GLib printf for consistency
+    
+    Just as in libsigrok, use g_vfprintf() in the log callback to make
+    sure we are linking to a standard-conforming printf implementation.
+
+commit fdfc532ecd49fc3353627ef4a093366e73d6b91a
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Sun Sep 13 22:10:54 2015 +0200
+
+    Build: Move _POSIX_C_SOURCE definition to config.h
+    
+    Do not redefine it though when already set, so that it can be
+    overridden by the user, or indirectly by the compiler settings.
+
+commit 367843620d039ad183bc4d7c33d91c316d717621
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Sun Sep 13 22:07:11 2015 +0200
+
+    Build: Include <config.h> first in all source files
+    
+    Since Autoconf places some important feature flags only into the
+    configuration header, it is necessary to include it globally to
+    guarantee a consistent build.
+
+commit 4916b17368e8ed06f4bfd045052ab0f891c33954
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Sun Sep 13 22:01:34 2015 +0200
+
+    Fix srd_log() format warnings
+
+commit fd4918101e0878be9d399a344511253f5867a646
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Sun Sep 13 21:32:27 2015 +0200
+
+    log: Enable varargs format warnings
+    
+    Decorate srd_log() with the GCC format printf attribute so that the
+    compiler can check the format string and arguments for consistency.
+    
+    Also remove the srd_err(), sr_warn(), etc. functions and replace
+    them with macro wrappers around srd_log().
+
+commit 9fb7e7fe2c7edafdeedf1976d1723ffe557c8a7c
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Sun Sep 13 21:10:40 2015 +0200
+
+    log: Remove srd_log_logdomain_{get,set} from the API
+    
+    The confusingly named srd_log_logdomain_set() simply set a global
+    string prefixed to the log message by the default log callback.
+    This is pretty much useless, misleadingly named, and not used by
+    either sigrok-cli or PulseView.
+
+commit 2730fe2397101f2c0a66abd3a7fd5fa531d3c710
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Sep 10 18:19:47 2015 +0200
+
+    instance.c: Don't use 'di' before NULL-checking it.
+
+commit 9576e005e18b2d0131e0fce5279a401cbe71c0f8
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Thu Sep 10 18:45:50 2015 +0200
+
+    Build: Put --no-print-directory into GNUMAKEFLAGS
+    
+    Also output the compiler version in the configuration summary.
+
+commit 0fd8a35de8b89fce395c14190f63c02b9aa976df
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Thu Sep 10 18:44:55 2015 +0200
+
+    sigrok.m4: Update with latest version from libsigrok
+
+commit a6c1c359dab0f707ecdc0bf7fcb7de9b7dabfd06
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Sun Sep 6 10:53:54 2015 +0200
+
+    libsigrokdecode.pc: Publish decodersdir variable
+    
+    This is so that downstream modules can find the install location
+    of the decoders.
+
+commit a4b5d9a99e4d202ccd65bc77624949e68a858e3a
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Sun Sep 6 10:51:22 2015 +0200
+
+    Build: Show CC and CFLAGS in configuration summary
+
+commit e4bafb8df34c2c051ec7a2e9a5e50b54849f0eb2
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Sep 3 09:19:56 2015 +0200
+
+    jtag_stm32: Decode IDCODE contents as strings (not just hex vals).
+
+commit d011c2e1fe2e4f0144a2c8e56d7feeda8520fd81
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Sep 3 08:36:21 2015 +0200
+
+    jtag_stm32: Decode more fields, improve IDCODE handling.
+
+commit 0edb5d58301af36844681f6427b06040678f63d0
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Wed Sep 2 21:06:01 2015 +0200
+
+    jtag_stm32: Cleanups, shorter code.
+
+commit a4dd548f5332453cef7442e453eef99343bdc5fb
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Wed Sep 2 20:49:47 2015 +0200
+
+    jtag_stm32: Update to reflect change in jtag OUT_PYTHON.
+
+commit 36faa6d0a353709235b7bf1076ae29552154e4a9
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Wed Sep 2 20:49:20 2015 +0200
+
+    jtag: Submit bit samplenumbers together with the bits.
+
+commit 6cdc1e0997c41ef92bb39a67f5f67b676ee5205e
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Tue Sep 1 20:13:27 2015 +0200
+
+    jtag_stm32: Fix incorrect handling of registers.
+    
+    The STM32F10xxx has two serially connected JTAG TAPs, the boundary scan tap
+    (5 bits) and the Cortex-M3 TAP (4 bits). See UM 31.5 "STM32F10xxx JTAG TAP
+    connection" for details.
+    Due to this, we need to ignore the last bit of each data shift (and we
+    currently ignore the 5 bits of the boundary scan tap).
+
+commit 80214a11ba67e76257750e2dae3b1169c3e61c17
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sun Aug 16 00:37:34 2015 +0200
+
+    jtag: Add more annotations, fix a SHIFT-IR/-DR issue.
+    
+    The code was previously not decoding a bit for the first state change
+    to SHIFT-IR/-DR, which was incorrect.
+
+commit f7332ee0869cea37577257126acfe40bbe9f4db4
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Fri Aug 14 20:05:34 2015 +0200
+
+    jtag: Fix/enable OUT_PYTHON output.
+
+commit 27b3f2b09722ac0333657212f1c5592ca6f4fe56
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Fri Aug 28 19:25:09 2015 +0200
+
+    Replace another -D_DEFAULT_SOURCE with -D_POSIX_C_SOURCE=200112L.
+
+commit 94ac149f168731a96e5b9adc2addaceb9b170142
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Fri Aug 28 18:34:34 2015 +0200
+
+    Build: Go back to _POSIX_C_SOURCE=200112L
+
+commit 3a2086f011619dc62c58f39ffcfade9763813276
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Wed Aug 26 23:12:28 2015 +0200
+
+    configure: Enable largefile support on 32-bit systems
+
+commit 7614222ca6cc73aae478d0ed659c0bcedfee4cc3
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Wed Aug 26 14:07:39 2015 +0200
+
+    Build: Define feature test macro _DEFAULT_SOURCE
+    
+    This basically makes glibc expose the same set of features as
+    if gcc was invoked without any restricting -std=c* option. Unlike
+    _GNU_SOURCE however, it does not enable GNU-specific extensions.
+    
+    So, with this macro defined the behavior of Linux with glibc
+    should match that of other platforms.
+
+commit a654ef6e407f1f914a6ec9b104a5e4cf9b84524c
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Wed Aug 26 13:01:16 2015 +0200
+
+    Build: Use TESTS prefix instead of CHECK for flag variables
+    
+    In order to avoid confusion of the flags-gathering pkg-config
+    result with the actual test for the availability of "check",
+    change the pkg-config output variable prefix from CHECK to TESTS.
+
+commit 051d71c2b2851a3bcee29f46f7c7027a2edbc568
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Tue Aug 25 03:06:33 2015 +0200
+
+    Clean up .gitignore
+
+commit 7eb90f2304e10d13281d47d944168fe40a77e6d6
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Tue Aug 25 02:59:48 2015 +0200
+
+    Build: Adopt new Autotools magic
+
+commit bcd4e47e8cc688d2a04c6fbfde1e0a354405f769
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Mon Aug 24 21:09:47 2015 +0200
+
+    Build: Reduce autogen.sh to trivial stub
+    
+    Use autoreconf instead of invoking the various Auto tools
+    separately. Get rid of the Darwin-specific guesswork -- it does
+    not make sense to handle this at the level of libsigrokdecode.
+    
+    People should set up their ACLOCAL_PATH themselves as appropriate
+    for their own system; just as they already need to set up various
+    other paths.
+
+commit 28aeef67d01b0263934feb3147813d3c750f942c
+Author: Daniel Elstner <daniel.kitta@gmail.com>
+Date:   Mon Aug 24 21:07:42 2015 +0200
+
+    Build: Add copy of libsigrok Autoconf macro file
+
+commit aac0ac249169a8774b30a2f3458a056ae2c80c63
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Fri Aug 21 14:50:04 2015 +0200
+
+    nunchuk: Fix inverted button press logic.
+    
+    The buttons are pressed if the respective bit is 0.
+
+commit cda2d36cfeed3f921252ffa95377529d6bdc074b
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Aug 20 19:36:12 2015 +0200
+
+    Pass unitsize per sample chunk.
+    
+    Don't pass unitsize to srd_inst_channel_set_all(), have that only
+    set the channel map. Instead, srd_session_send() now has a parameter
+    for the unitsize which is passed with every new chunk to be decoded.
+    
+    This is in preparation to fix issues with devices or files which
+    have a unitsize != 1 and where the "guessed" unitsize based on the
+    number of channels is not correct.
+    
+    This also allows for (potential) future changes where every chunk can
+    indeed have a different unitsize.
+    
+    This fixes (parts of) bug #352.
+
+commit bbe1b715a71536e38a2b7e2362dbd8827a18ec1f
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Tue Aug 18 08:24:29 2015 +0200
+
+    mrf24j40: Fix a register address typo.
+
+commit 04c310c8d90a29dc4125ad2b707d08ed4fe15c52
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Aug 17 22:04:46 2015 +0200
+
+    tlc5620: Add options for per-DAC Vref, show voltages.
+    
+    Instead of showing raw values in the annotations, calculate the
+    actual voltage (based on raw value, gain, and Vref) and use that.
+
+commit a945c53611b3c8bdfd5d30fec7675320213acfe0
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Aug 17 22:05:06 2015 +0200
+
+    tlc5620: Handle the case of less than 11 bits in a command.
+
+commit 3992b1e180283036ad4a834419b73d5d3eb53089
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Aug 17 22:01:37 2015 +0200
+
+    tlc5620: Properly handle LOAD and LDAC based operations.
+    
+    - If LOAD goes low *and* LDAC is already low, the voltage is set
+      immediately.
+    
+    - If LOAD goes low but LDAC is high, the value is only written into
+      an internal register, but the voltage is not changed (yet).
+    
+    - If LDAC goes low, all four DAC voltages (DAC A/B/C/D) are set
+      according to the respective register values at the same time.
+
+commit e57813d5b3a44d0e504b6571c9b06a8a8da79f8a
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Aug 17 21:46:22 2015 +0200
+
+    tlc5620: Only decode the last 11 bits, ignore the rest.
+
+commit ce0c47f34659181a7c5f82bfb782d8a5f5987ac7
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Aug 17 21:28:21 2015 +0200
+
+    tlc5620: Fix incorrect DAC selection decode, add more annotations.
+
+commit 3e84c443857ae649be31df7ca13690c6d3578e54
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Fri Aug 14 19:01:39 2015 +0200
+
+    usb_packet: Handle invalid packets more gracefully.
+    
+    Previously the PD was blindly trying to decode any packet, no matter
+    whether it was too short (and/or bogus) or not, causing issues like this:
+    
+      srd: Calling usb_packet decode(): IndexError: list index out of range
+    
+    Such cases of invalid input are now handled better by emitting "UNKNOWN"
+    and "Invalid packet" annotations.
+    
+    This fixes bug #186.
+
+commit 42227c2d29c8330c955cf64cf92be0bf1bf4aeeb
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Fri Aug 14 13:48:08 2015 +0200
+
+    usb_packet: Fix incorrect DATA*/MDATA handling.
+    
+    Thanks to Pavel Sukortsev for the bug report and fix.
+    
+    This fixes bug #623.
+
+commit 08c41387ca016a59c041c8bc76efab037da5894a
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Aug 6 19:27:04 2015 +0200
+
+    Add initial SD card (SD mode) decoder.
+    
+    In the current state the decoder can decode the following commands:
+    CMD0, CMD2, CMD3, CMD6, CMD7, CMD8, CMD9, CMD10, CMD13, CMD16, CMD55,
+    ACMD6, ACMD13, ACMD41, ACMD51.
+    
+    Other commands (and more details for existing commands) will be added later.
+
+commit fbff319f0a65e2d87a609f77a32b26ef200a5215
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Jul 23 17:12:41 2015 +0200
+
+    Slightly more verbose logging in srd_inst_decode().
+
+commit f7504c3772512586c3178e26b6945a4064c070d7
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Jul 18 18:04:08 2015 +0200
+
+    Bump version to 0.4.0 (the upcoming next major release).
+
+commit 709b84383503326eba654613d083352b00d31c97
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Jul 18 17:59:19 2015 +0200
+
+    Append "-git" to the version string.
+    
+    This avoids confusion with the released tarballs.
+
+commit db858a048288645d00eeb643dc43006ef9875280
+Author: Bart de Waal <bart@waalamo.com>
+Date:   Mon Jul 13 23:59:55 2015 +0200
+
+    Add protocol decoder for Modbus RTU.
+
+commit d574715e3916740deeffbd7637d20c78e062fff3
+Author: Josef Gajdusek <atx@atx.name>
+Date:   Thu Jul 9 12:54:28 2015 +0200
+
+    qi: Add Qi charger protocol decoder
+
+commit e4302cbe5cb375a50bd9a30a8a2855d9fa6ab14d
+Author: Aurelien Jacobs <aurel@gnuage.org>
+Date:   Sat Jun 6 22:05:06 2015 +0200
+
+    Add an MDIO/SMI decoder.
+
+commit 295b78c7d971e1abd7021d88415523ad66a3e448
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Wed Jul 1 01:21:53 2015 +0200
+
+    adns5020: Minor tweak to annotation format.
+
+commit 07505b2a1a31759f90f9e7e2bfee5d75d4b1b729
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Wed Jul 1 00:59:23 2015 +0200
+
+    mrf24j40: Factor out register lists to lists.py.
+
+commit fecabafe31aa77e039268b63fa6a409922858505
+Author: Karl Palsson <karlp@tweak.net.au>
+Date:   Wed May 27 01:25:16 2015 +0000
+
+    Add a Microchip MRF24J40 802.15.4 2.4GHz RF tranceiver decoder.
+    
+    No interpretation of register bits, nor attempting to decode packet contents,
+    but all shifted register addresses and long register memory regions are
+    decoded.
+    
+    Signed-off-by: Karl Palsson <karlp@tweak.net.au>
+
+commit 8f7f170ffbb0acfd170054546a9ecf27f557167e
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Jun 22 15:15:17 2015 +0200
+
+    adns5020: Add manufacturer name to description.
+
+commit ef0734978955d34e42187f79f6c2ed910b4b873d
+Author: Karl Palsson <karlp@tweak.net.au>
+Date:   Sat May 16 17:14:50 2015 +0000
+
+    Add Avago ADNS-5020 optical mouse sensor decoder.
+    
+    Decodes reads/writes of registers. Understands resetting on chip select if
+    provided. Does not understand burst mode.
+    
+    Signed-off-by: Karl Palsson <karlp@tweak.net.au>
+
+commit e2ba53bbd8d176aedc8f5f9a3bb4086bc5f526f3
+Author: Karl Palsson <karlp@tweak.net.au>
+Date:   Sat May 30 20:28:55 2015 +0000
+
+    am23xx: explicitly mention RHTxx devices.
+    
+    Include their compatibility in the dropdown options too.
+
+commit 468c974e7bdbc068ad1771069e3e0adb35853ad5
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sun Apr 26 17:53:24 2015 +0200
+
+    timing: Shorten annotations (time units).
+
+commit 92adde514e1be3015ebd44da813fb6bec0001370
+Author: Baruch Even <baruch@ev-en.org>
+Date:   Sat Apr 4 21:21:34 2015 +0200
+
+    Add a decoder that calculates timings between transitions.
+
+commit c2446117b9758b14e328e4244e9787e5fb65f62b
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Apr 4 20:41:24 2015 +0200
+
+    spiflash: Add lists.py and a 'chips' PD option.
+
+commit 3ca1f1b3530ff5fb2e93785516e088a58429191e
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Apr 4 19:41:44 2015 +0200
+
+    Rename the 'mx25lxx05d' PD to 'spiflash'.
+    
+    This is in preparation of making the PD more generic so it can support
+    a lot more xx25 series SPI (NOR) flash chips.
+
+commit 868fd207a7506ae2ab48d6a8755350e452d60521
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Apr 4 18:34:42 2015 +0200
+
+    Fix a bunch of typos.
+
+commit c357abd198bd195cb9ea015130dc76c8c7a33651
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Tue Apr 7 02:36:47 2015 +0200
+
+    autogen.sh: Drop obsolete MinGW/MSYS items.
+    
+    For Windows builds (which require MinGW-w64) we currently support:
+    
+     - cross-builds using MXE (mxe.cc) and possibly other cross-compile setups
+    
+     - native builds using MSYS2 (sf.net/projects/msys2/)
+    
+    Neither of those require explicitly specifying ACLOCAL_DIR.
+
+commit 3085037bbcb7f6a5ea101227f3ab2045645a21c4
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Fri Apr 3 23:21:59 2015 +0200
+
+    onewire_link: Fix a bug when the samplerate is too low for the PD.
+    
+    The code was trying to emit annotations before
+    self.register(srd.OUTPUT_ANN) was run.
+    
+    This fixes bug #357.
+
+commit 348118b732231daf9d9e4b3f7c80e7939f3eb0ca
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Fri Apr 3 22:50:41 2015 +0200
+
+    Makefile.am: Use libtool's -no-undefined option.
+
+commit cdceaa9438e889e55d7f5c364f05548afba66bc3
+Author: Andreas Sandberg <andreas@sandberg.pp.se>
+Date:   Fri Feb 13 21:42:01 2015 +0000
+
+    spi: Don't decode data lines if CS isn't asserted
+    
+    Avoid decoding and outputting data from the SPI bus if the CS pin
+    hasn't been asserted. This avoids confusing both users and stacked
+    decoders which otherwise end up seeing traffic intended for other
+    chips (or just noise).
+    
+    Note: The old behavior of decoding all traffic is still in place if
+    no CS pin has been wired up to the decoder.
+    
+    This fixes bug #559.
+
+commit a7c8dc5e3a2b7ad38eb03a958180f97f3059ea31
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Apr 2 22:48:03 2015 +0200
+
+    Slightly shorten a few PD descriptions.
+
+commit d2bcb32bc16eddffc9ec54b505c03028a2ec4160
+Author: Petteri Aimonen <jpa@git.mail.kapsi.fi>
+Date:   Sat Mar 7 16:14:19 2015 +0200
+
+    Add a decoder for stepper motor direction/speed signals.
+
+commit 1c023fab6542d33b3e1c7f32504c0fcc9495dfb1
+Author: Petteri Aimonen <jpa@git.mail.kapsi.fi>
+Date:   Sat Mar 7 15:55:18 2015 +0200
+
+    Fix a few decoding bugs with arm_etmv3.
+    
+    Fixed:
+    - wrong address decoding for some branches
+    - error in annotation lists for exception entry/exit
+    - exception was being thrown for 0E0N p-header packets
+    - fixes to objdump output parsing, better function name & source code matching
+    
+    New features:
+    - added decoding of IRQ names for branch exception info
+    - added support for -C option to objdump to decode C++ symbol names
+    - put branches on the "Exceptions" annotation row when they contain exception info.
+
+commit e4227bafd63472d1a0d23fa54f62a2b20e296115
+Author: Matt Porter <mporter@konsulko.com>
+Date:   Mon Mar 30 23:59:38 2015 -0400
+
+    pwm: add period annotation
+
+commit 077fa8acbcb8b585af6f5323f16221940a27a72e
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Mar 7 19:12:15 2015 +0100
+
+    Use g_malloc*() consistently, simplify error handling.
+    
+    Use g_malloc*() for small allocations and assume they always
+    succeed. Simplify error handling in a few places accordingly.
+    
+    Document the rules in the README file.
+
+commit c052046717c09758bbdf62819e0029dddcae7159
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Feb 28 14:18:56 2015 +0100
+
+    unit tests: Drop unneeded check_ filename prefix.
+
+commit 7c139a54d14979f832c53d6f7fae7d415ca41a74
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Wed Mar 25 09:41:23 2015 +0100
+
+    mx25lxx05d: Implement FAST READ command.
+
+commit 1483fb220ce56405433aee298d1637f6b041ac2b
+Author: Petteri Aimonen <jpa@git.mail.kapsi.fi>
+Date:   Mon Feb 23 19:47:56 2015 +0200
+
+    Fix typo in swd decoder
+
+commit 686f0c3621cd8ef7264f3e45e0218f2ebdfb612a
+Author: Petteri Aimonen <jpa@git.mail.kapsi.fi>
+Date:   Mon Feb 23 19:49:06 2015 +0200
+
+    Add ARM TPIU/ITM/ETMv3 decoders
+
+commit 5dc48752efc84171dece2dcef93577e5483b9775
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Tue Feb 24 21:46:04 2015 +0100
+
+    nrf24l01: Change 'xn297_extensions' option to 'chip'.
+    
+    This allows for easily extending the PD to support other clones or
+    compatibles of the nRF24L01(+) chip as well.
+
+commit b03e2209d5e83e3c1b9737097b13109c7e4658c3
+Author: Mike <mike@flomp.net>
+Date:   Fri Feb 6 16:42:32 2015 +0000
+
+    nrf24l01: Add option to support the XN297's extra registers
+
+commit b5712ccbbcd023e5ac20d790bf75af3c18fc66d5
+Author: Petteri Aimonen <jpa@git.mail.kapsi.fi>
+Date:   Sun Feb 15 19:08:36 2015 +0200
+
+    Improve uart decoder sample positions at high data rates.
+    
+    At 3 samples per bit, the uart decoder took the value at the last sample
+    instead of the middle one. Improve calculations so that sampling is more
+    accurate at odd number of samples per bit.
+
+commit 2590c098bb44f660a9668db66deaf59f3a7a651b
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Jan 31 23:39:02 2015 +0100
+
+    unit tests: Disable timeout for one of the test cases.
+    
+    This one can take a while, thus disable the timeout.
+
+commit 9177963de41c2d003d417049470eea3c98eeb2ef
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Jan 24 20:46:18 2015 +0100
+
+    README: Update build requirements list.
+
+commit c4d5221077ef95488325dd104a806eadb5b5f13b
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Wed Nov 19 18:57:56 2014 +0100
+
+    Add 24xx I2C EEPROM protocol decoder.
+
+commit 49d0e05ce73b2b8e47714b5d95e66e9b27aeaa4d
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sun Dec 28 14:33:50 2014 +0100
+
+    spi: Add binary output facilities for MISO/MOSI.
+    
+    This fixes bug #424.
+
+commit be42cffca100c00d0d5510b08dcb66655f8a5746
+Author: Bert Vermeulen <bert@biot.com>
+Date:   Tue Dec 16 14:51:47 2014 +0100
+
+    edid: Add annotation rows.
+
+commit 2ef800662842775738659e72ade594713cfb849b
+Author: Bert Vermeulen <bert@biot.com>
+Date:   Tue Dec 16 14:51:19 2014 +0100
+
+    eded: Add all sections.
+
+commit 70aa53ec10dabe4a5267e142974b35d1312f7119
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sun Nov 23 23:06:45 2014 +0100
+
+    jitter: Simplify ascii-float binary out.
+    
+    This also outputs one item of OUT_BINARY per jitter value (not one
+    item per ASCII character in the ASCII floating point number).
+
+commit 05aaa48637fe56ac087569d784dbfdc91341f619
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sun Nov 23 22:55:54 2014 +0100
+
+    jitter: Rename "jitter" binary out to "ascii-float".
+
+commit 5f987d6f312a7a586b0af5aca267b98747e5df4a
+Author: Sebastien Bourdelin <sebastien.bourdelin@savoirfairelinux.com>
+Date:   Thu Nov 13 15:50:43 2014 -0500
+
+    jitter: add a binary output to report the raw jitter value.
+    
+    Signed-off-by: Sebastien Bourdelin <sebastien.bourdelin@savoirfairelinux.com>
+
+commit 961699aaab1e44dab827c9f1884100b87a0a97fd
+Author: Sebastien Bourdelin <sebastien.bourdelin@savoirfairelinux.com>
+Date:   Wed Nov 12 12:42:03 2014 -0500
+
+    jitter: fixes an error when a miss clock/signal is detected
+    
+    Signed-off-by: Sebastien Bourdelin <sebastien.bourdelin@savoirfairelinux.com>
+
+commit 34cfd419098c5a9dc32270308c5e55e9c6893e91
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sun Nov 9 20:29:31 2014 +0100
+
+    jitter: Factor out handle_clk() and handle_sig().
+
+commit c2049e2c98e3186a2c6462e5dcede8d2b0747021
+Author: Sebastien Bourdelin <sebastien.bourdelin@savoirfairelinux.com>
+Date:   Thu Oct 23 13:08:29 2014 -0400
+
+    Add a timing jitter decoder.
+    
+    Signed-off-by: Sebastien Bourdelin <sebastien.bourdelin@savoirfairelinux.com>
+
+commit 9658c7100a62499cce1939193c8be80bb300d0f8
+Author: Sebastien Bourdelin <sebastien.bourdelin@savoirfairelinux.com>
+Date:   Wed Oct 29 23:31:43 2014 -0400
+
+    pwm: Fix and rework
+    
+    Reworked in the algorithm:
+     - Fixed the polarity setting
+     - Taken in consideration the first transition
+     - Using the 'None' state instead of -1 and 0 value
+     - Simplify the algorithm and remove useless branches and variables
+     - Avoid re-calculating the same thing more than once
+     - Renamed a few variables for a better understanding
+     - Duty cycle precision changed to floating value
+    
+    Otherwise:
+     - Added a meta OUTPUT for the duty cycle average
+     - Renamed the polarity option:
+    	'polarity', 'active low/high' are well-understood terms.
+     - Added comments
+    
+    Signed-off-by: Sebastien Bourdelin <sebastien.bourdelin@savoirfairelinux.com>
+
+commit 8a110ab1ea46d89d36a610e4249fe1eabed27757
+Author: Jens Steinhauser <jens.steinhauser@gmail.com>
+Date:   Sun Oct 19 22:54:51 2014 +0200
+
+    spi: Use 'None' to signal the missing CS# pin.
+
+commit 22630a3d54361f083877a68724e8b823d5e063a7
+Author: Jens Steinhauser <jens.steinhauser@gmail.com>
+Date:   Sun Oct 19 21:29:07 2014 +0200
+
+    nrf24l01: Don't decode incomplete commands.
+    
+    Wait for the CS# line to be inactive before decoding the commands.
+
+commit 3cc4c4a96dba8390ec4eabbd62cc1d50d653640e
+Author: Jens Steinhauser <jens.steinhauser@gmail.com>
+Date:   Sun Oct 19 20:39:38 2014 +0200
+
+    nrf24l01: Check for CS# pin and only throw exceptions once.
+
+commit 1c49e875623918f8893308307f487a1f551daec4
+Author: Jens Steinhauser <jens.steinhauser@gmail.com>
+Date:   Sat Oct 18 11:31:16 2014 +0200
+
+    spi: Tell stacked decoders about missing CS# signal.
+    
+    This could previously be detected by the absence of a CS-CHANGE packet
+    before the first data packet, but it makes the stacked decoder simpler
+    if it is told directly.
+
+commit b4332f0fdd7706d9caf39a5dcd8a1b5b06a626ab
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Oct 16 21:23:19 2014 +0200
+
+    Add a PWM decoder.
+
+commit 0c7d5a56449babeb84013118935c0dacecdadd70
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Oct 16 17:58:28 2014 +0200
+
+    uart: Fix code comment.
+
+commit 7cf698c5475ac6948d7a9d5c2a6e4ec9cb878d84
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Oct 16 09:35:27 2014 +0200
+
+    uart: Emit databyte and bits list at the same time.
+    
+    This will allow for much simpler code in stacked PDs.
+    
+    Adapt stacked PDs to new API.
+
+commit bd6594c0cdae0a525e147c6e33e496ff87823d16
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Wed Oct 15 15:23:22 2014 +0200
+
+    instance.c: Fix whitespace.
+
+commit ee7de90f6e61d15e4aeb40ccbe1a6d007b1fc9a1
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Wed Oct 15 15:22:48 2014 +0200
+
+    midi: Fix two incorrect sample numbers.
+
+commit 486b19ce017c6663be6574dacd0c823304903bca
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Oct 13 17:05:07 2014 +0200
+
+    All PDs: More consistent names for ss/es variables.
+    
+    Use self.ss/self.es, or if there's a need to differentiate
+    them a bit more, use self.ss_<suffix>/self.es_<suffix> consistently.
+    
+    Also, drop some unused variables.
+
+commit 95d11271b46a46788d497481d03177e883c8554e
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Wed Oct 1 19:01:39 2014 +0200
+
+    All PDs: Only import the 'Decoder' object.
+    
+    Anything else in the pd.py files doesn't have to be imported/exposed.
+
+commit 0b6bc7f9554c0980153563b6a3d16c3642fc4651
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sun Oct 12 20:21:33 2014 +0200
+
+    am230x: Factor out handle_byte() to simplify state machine.
+
+commit dcfb60a1658243c3130774fe00645e7fedb23211
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sun Oct 12 19:02:00 2014 +0200
+
+    swd: Drop unnecessary debug code.
+
+commit 4afe40462af650a0df1bfb7bd185ee666f2b30f0
+Author: Angus Gratton <gus@projectgus.com>
+Date:   Sat Jul 12 19:34:19 2014 +1000
+
+    swd: Add SWD protocol decoder for ARM Serial Wire Debug format.
+    
+    Supports annotated output for analysing debug sessions, Python output
+    for potential stacked decoders looking at higher level debug
+    operations.
+
+commit 25adf5cf29d26751d3f481bd2d22fe8d034ed44c
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sun Oct 12 17:31:40 2014 +0200
+
+    am230x: Minor documentation fix.
+
+commit ed758f091ebb31380868041da87812d3e4ea4a94
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sun Oct 12 15:13:50 2014 +0200
+
+    am230x: Use slightly more liberal timing values.
+    
+    This seems to be required at least for some AM2301 and DHT11 sensors.
+
+commit cda1352a7ce0248e6db1996d9ddb9dbee2f91e8b
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sun Oct 12 14:58:25 2014 +0200
+
+    am230x: Change option to 'device' to allow for more devices.
+
+commit f87162978a3f804d43ae12208c3d6a4a86382c1c
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sun Oct 12 14:57:56 2014 +0200
+
+    am230x: Fix self.reset() method name.
+
+commit 47405f47db235c06d9f2ad26ae51791136b62a91
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sun Oct 12 14:31:21 2014 +0200
+
+    am230x: Minor cosmetics.
+
+commit b1f2b85bd9a7cb79265f251cbecba84cdc04dd5e
+Author: Johannes Römer <jroemer@physik.uni-wuerzburg.de>
+Date:   Mon Oct 6 23:30:22 2014 +0200
+
+    Add decoder for AM230x digital humidity and temperature sensors.
+
+commit 280d554c29fc234d27be77d602436395d01da6dd
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Aug 28 22:48:39 2014 +0200
+
+    Replace ann_format with ann_class.
+    
+    The naming has been changed to "annotation class" a while ago.
+
+commit e228150a0e8d60ef3fcaa6f077305a8e6045dfe8
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Aug 28 21:38:39 2014 +0200
+
+    sdcard_spi/usb_packet: Drop unused variables.
+
+commit 4eafeeefc716a617837f1d69c040753b0b8d71f7
+Author: David Barksdale <amatus@amatus.name>
+Date:   Mon Sep 15 11:50:09 2014 -0500
+
+    uart: Implement signal inversion
+
+commit f38da319741c74b83b4d2146f872d05cbd8e2f3c
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Sep 11 00:45:08 2014 +0200
+
+    Fix out-of-tree build of the unit tests.
+
+commit cb9a5046bed65e38b28c21afcb8945b19d4e8012
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Wed Sep 10 09:26:11 2014 +0200
+
+    Various PDs: Whitespace, cosmetics.
+
+commit cac173dbec2b1761414ace8289204945557c8526
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Sep 8 21:44:03 2014 +0200
+
+    rfm12: Cosmetics.
+    
+    Also, update author email address.
+
+commit c9021bc926a42284baf99c174eba4a52b412847e
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Sep 8 11:55:07 2014 +0200
+
+    rfm12: Frequencies: Fix typo (915MHz), add 315MHz entry.
+
+commit 04ff49263b0a462250d2301e6d4d17db5904a8d3
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Sep 8 11:54:25 2014 +0200
+
+    rfm12: Avoid using the Python 'range' keyword as variable.
+
+commit 4ef0ff313b3ac48d585f581593738c1a3e607f26
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Sep 8 11:48:05 2014 +0200
+
+    rfm12: Drop debug printing.
+    
+    Any errors during decoding should be handled by the PD state machine.
+
+commit d44c802b7cd5a89fee9cdf294acb999d30dd2507
+Author: Sławek Piotrowski <slawomir.piotrowski@payu.pl>
+Date:   Thu Sep 4 00:32:14 2014 +0200
+
+    RFM12 decoder
+
+commit c414f1996bec719dda64ca5731fea78f1d48887a
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Sep 1 17:38:09 2014 +0200
+
+    PD tests moved into the sigrok-test repo.
+    
+    Drop them from the libsigrokdecode repository.
+
+commit 586361052b414d9e17fdecf54c5db0282c25339f
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Aug 30 00:55:56 2014 +0200
+
+    spdif: Simplify get_pulse_type() a bit.
+
+commit 5302d1e99ed4234b622e7d85ff3e58e2e4648f25
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Aug 30 00:16:33 2014 +0200
+
+    spdif: Use strings for decoder states.
+
+commit cc16130e89911cae694c5245df9fd223750c47d3
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Aug 30 00:09:50 2014 +0200
+
+    spdif: Add another annotation helper.
+
+commit eb148e7a78ed4c3b9615b41d9c967cb5f403fa0f
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Fri Aug 29 23:50:56 2014 +0200
+
+    spdif: Refactor and reduce nesting level.
+
+commit cb6d4c6d8a06ee62a6aa37cc5cddc71cd5ae3adb
+Author: Guenther Wenninger <robin@bitschubbser.org>
+Date:   Sat Apr 19 02:20:42 2014 +0200
+
+    Add initial S/PDIF decoder.
+
+commit 00bdc23e73fc3af5a7656ae584216330e4a31556
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Aug 16 21:35:26 2014 +0200
+
+    ds1307: Warn about (and ignore) non-DS1307 traffic.
+
+commit 7d74799011f28796bbb8165dc3bcd4c8cca12052
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Aug 16 21:19:05 2014 +0200
+
+    ds1307: Correctly handle address wrap-around.
+
+commit 53908ef10d1c5e3d77c3551703fa1633303b9242
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Aug 16 21:17:32 2014 +0200
+
+    ds1307: Refactoring and cleanups.
+
+commit 903e9b14c84400579e0d786b7a96e9e587b5849b
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Aug 16 21:03:00 2014 +0200
+
+    ds1307: Handle SRAM register accesses.
+
+commit 37834eed4b104fcf77258cca846302911dea34ca
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Aug 16 20:45:56 2014 +0200
+
+    ds1307: Handle register 0x07 (control register).
+
+commit 5188abb910323c22c57ef95880cdd78eaab2e1f8
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Aug 16 20:36:09 2014 +0200
+
+    ds1307: Emit per-bit annotations for registers.
+    
+    Also, add more annotation classes (and annotation rows).
+
+commit 11bd6317ec8d00b3a421516c2e9747a8f7a551ea
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Aug 16 18:43:51 2014 +0200
+
+    configure.ac: Use AM_CFLAGS instead of CFLAGS.
+    
+    CFLAGS, CPPFLAGS, LDFLAGS and so on are so-called "user variables" and
+    are meant for users of the package to use/override. The package itself
+    should not set or modify them in any way. Instead, the "shadow variables"
+    such as AM_CFLAGS, AM_CPPFLAGS, AM_LDFLAGS and so on, can be modified by
+    the package.
+
+commit 98c47d1107c0f0509cb7e40f2805286e1319afef
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sat Aug 16 18:38:07 2014 +0200
+
+    tca6408a: Cosmetics.
+
+commit d4026957a57e5f665fa91c8d706976613e29c1b4
+Author: alberink <alberink@stampfini.org>
+Date:   Thu Jun 19 17:18:52 2014 +0200
+
+    Add decoder for TCA6408A I2C I/O expanders.
+
+commit 28c3c217cc70cf2eba41dbca2954c5d8382802d7
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Aug 14 19:30:54 2014 +0200
+
+    tests: Factor out srdtest_setup() / srdtest_teardown().
+
+commit d841d5b26f2134143fc80c9898522d13387b7cc8
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Aug 14 18:51:11 2014 +0200
+
+    Whitespace and consistency fixes.
+
+commit dfbe1fb2a602114f74cc4f7e3610204dbb559012
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Aug 11 22:53:02 2014 +0200
+
+    pdtests: Check for SamplerateError in all PDs that emit it.
+
+commit a573d3944c410d90adb5130323e0f3792d9ae201
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Aug 11 22:53:35 2014 +0200
+
+    parallel: Enforce that at least one pin must be provided.
+
+commit f04964c696336f5699a099bbd64785f199d91f4c
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sun Aug 10 09:22:29 2014 +0200
+
+    spi/nrf24l01/uart: Use ChannelError exception.
+    
+    Rename the old MissingDataError to the clearer ChannelError. Also, add
+    ChannelError in the UART decoder.
+
+commit 8aeedf9ee376f1b48fe9c42924ebf34f9c8c2ddd
+Author: Jens Steinhauser <jens.steinhauser@gmail.com>
+Date:   Sun Aug 3 23:30:42 2014 +0200
+
+    nrf24l01: prettify annotation output
+
+commit 1f6f2ad8c33e58cfd40ea0370e6d2dfbd6040026
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Jul 31 00:44:20 2014 +0200
+
+    tests/pdtest: Small fix to make it work with Python 3.2.
+    
+    Python 3.2 doesn't yet have the copy() method for lists:
+    
+      AttributeError: 'list' object has no attribute 'copy'
+
+commit 83df730dd21ce52670a593455cfe5e732989a90d
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Jul 31 00:02:22 2014 +0200
+
+    tests/check_session.c: Fix compiler warning.
+    
+    This fixes 'warning: "_POSIX_C_SOURCE" redefined' with some Python
+    versions.
+
+commit 3b884e8567e7a5fc2f5582951ec9af9a69fd8b65
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Wed Jul 23 00:00:33 2014 +0200
+
+    Drop references to obsolete sigrok-commits mailing list.
+
+commit 7149b578a48e90a8b34d70174f8c3ce51de1e282
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sun Jul 20 13:16:30 2014 +0200
+
+    runtc: Update to the new libsigrok session API.
+    
+    (also fixes the build for libsigrokdecode)
+
+commit 3a1501e9e07a93a9b157fcce53aa070c5a0bf3d8
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Sun Jul 20 11:31:27 2014 +0200
+
+    Fix incorrect doxygen comment for srd_decoder_list().
+    
+    This fixes bug #378.
+
+commit 35b380b1156434b73d4a976c68f5ab3604c8510a
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Tue Jul 15 22:49:43 2014 +0200
+
+    All PDs: Minor whitespace and consistency fixes.
+    
+     - No newlines at the end of files.
+     - No trailing ';' characters.
+     - Comparison with None: Use 'is None' or 'is not None'.
+     - Comparison with True/False: Use 'if cond:' or 'if not cond:'.
+     - Various minor whitespace fixes.
+
+commit 22fc7ace72f3165c98208a8f544156e04a709639
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Wed Jul 9 17:31:32 2014 +0200
+
+    uart/i2cfilter: Don't check multiple-choice options.
+    
+    For options which only have a limited set of valid values, we don't need
+    to check (in the PD) whether a valid value was supplied, since the backend
+    can do that for us.
+
+commit 21b39043472eeeb2e0155eafc73247f5010af714
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Tue Jul 8 21:36:53 2014 +0200
+
+    Various PDs: Minor consistency fixes.
+    
+    (Consistently use single-quotes for all Python strings everywhere)
+
+commit 21cda9512f29947617da45822ab524b1f76f56c1
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Tue Jul 8 21:32:32 2014 +0200
+
+    Various PDs: Throw SamplerateError instead of Exception.
+    
+    Also, use the "if not self.samplerate" form, which catches both the case
+    where self.samplerate is None, as well as the case where it is 0.
+
+commit e28f7aee3b96afeb543e0c3c29e3950ddd61a490
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Tue Jul 8 21:21:03 2014 +0200
+
+    All PDs: Drop unneeded exceptions.
+    
+    In all current PDs it is not necessary to raise an exception upon
+    invalid states (of the PD's state machine), since we can guarantee that
+    no such invalid state can ever be reached in these PDs.
+
+commit 0e501c70cf26f208d7e523b7fe737d0e8d565109
+Author: Jens Steinhauser <jens.steinhauser@gmail.com>
+Date:   Tue Jul 8 22:15:30 2014 +0200
+
+    Add nRF24L01(+) protocol decoder.
+
+commit 34929ee00c976842196ca95240b6cb1a7f5d8c75
+Author: Jens Steinhauser <jens.steinhauser@gmail.com>
+Date:   Tue Jul 8 17:48:56 2014 +0200
+
+    spi: Fix order of MISO/MOSI data items.
+
+commit 0d06305deb8d94dfddfef710004a500bf30fb1ff
+Author: Bert Vermeulen <bert@biot.com>
+Date:   Tue Jul 8 21:43:58 2014 +0200
+
+    pdtest: Use new exception output.
+
+commit 84d7ecb947a8a6453fc0cb1d7973a821615dec54
+Author: Bert Vermeulen <bert@biot.com>
+Date:   Tue Jul 8 21:43:33 2014 +0200
+
+    Make exception output more predictable.
+
+commit f6c7eade2b8853b3d525b5cc0402e89ca74c1908
+Author: Marcus Comstedt <marcus@mc.pp.se>
+Date:   Tue Jul 1 00:07:40 2014 +0200
+
+    Remove dependency on Python.h from public API header
+    
+    This prevents Python.h from being included into client code, where
+    it can mess things up by e.g. redefining _POSIX_C_SOURCE.
+
+commit 67ecff568264e0af2cf137af1d0f4edf7a9dcf2e
+Author: Marcus Comstedt <marcus@mc.pp.se>
+Date:   Sun Jun 29 11:38:50 2014 +0200
+
+    runtc: Fix incorrect include directive
+    
+    runtc.c used to try to include "../config.h".  This only works when
+    building in the source tree, otherwise there is no config.h in the
+    parent directory of runtc.c.  However, the explicit path is
+    unnecessary since the build directory (whether the same as the source
+    directory or not) will always be added to the include path.
+
+commit 6a0341595610c9d14d4121bb8fa82ab7eeb03693
+Author: Marcus Comstedt <marcus@mc.pp.se>
+Date:   Mon Jul 7 01:36:22 2014 +0200
+
+    srd_decoder_load_all_path: Support zipimport paths
+    
+    srd_decoder_load() works perfectly with decoders stored inside zip files.
+    However, srd_decoder_load_all{_path,}() did not, because it assumed that
+    normal directory listings can be used to enumerate decoders, which is not
+    the case for zipped decoders.  Fix this by providing a fallback based on
+    the zipimporter Python class.
+
+commit 37b0da68d021530012f17e86b4754d109977ba76
+Author: Bert Vermeulen <bert@biot.com>
+Date:   Fri Jun 27 18:45:46 2014 +0200
+
+    spi: Add coverage tests for all exceptions.
+
+commit 7ea7c017c334ebb466923f6e9fef9ef72e157676
+Author: Bert Vermeulen <bert@biot.com>
+Date:   Fri Jun 27 18:45:01 2014 +0200
+
+    spi: Add coverage tests for all mosi/miso and lsb/msb combinations.
+
+commit 4fecc5a4bcb036f40e23ab967579334076203c2f
+Author: Bert Vermeulen <bert@biot.com>
+Date:   Fri Jun 27 18:37:58 2014 +0200
+
+    spi: Refactor for more coverage, and remove dead code.
+
+commit 5f22c187f99ea13e0a1a5c8c995e73a75f93a9b1
+Author: Bert Vermeulen <bert@biot.com>
+Date:   Thu Jun 26 19:56:02 2014 +0200
+
+    runtc: PD option value is a GVariant, not string.
+    
+    This is still broken: it needs to properly check the expected type of
+    the option, not just blindly assume G_VARIANT_TYPE_STRING.
+
+commit 604eece9928adbf4fb6b85470ceadeca1b73fabb
+Author: Bert Vermeulen <bert@biot.com>
+Date:   Tue Jun 24 18:17:22 2014 +0200
+
+    pdtest: Generate report regardless of verbose mode.
+
+commit 66a6eee7b0783f816187e75324df09a729a4070e
+Author: Bert Vermeulen <bert@biot.com>
+Date:   Tue Jun 24 16:04:45 2014 +0200
+
+    edid: Add another test, covering more code in the PD.
+
+commit d45058e87e7045fef1b7c4425de1917a554545f7
+Author: Bert Vermeulen <bert@biot.com>
+Date:   Tue Jun 24 15:49:05 2014 +0200
+
+    pdtest: Generate a report listing missed lines across the whole PD.
+
+commit d2bdb1303679b97c3de5ce2d2d1f2b62c9828a3a
+Author: Bert Vermeulen <bert@biot.com>
+Date:   Mon Jun 23 19:52:45 2014 +0200
+
+    i2c: Generate proper exception for missing samplerate, and test for it.
+    
+    Also remove some dead code.
+
+commit d510f7b3d5d03c6fca5b6af4e184dc2f46da9a1a
+Author: Bert Vermeulen <bert@biot.com>
+Date:   Mon Jun 23 19:49:47 2014 +0200
+
+    pdtest/runtc: Support for output type 'exception'.
+    
+    The match value should be the name of the exception thrown, e.g.
+    AttributeError, IndexError or even a custom exception defined in
+    the protocol decoder, such as SamplerateError.
+
+commit 4e891b94cae1b3e83155721476137a900fe242a6
+Author: Mike Frysinger <vapier@gentoo.org>
+Date:   Sat Jun 14 01:54:11 2014 -0400
+
+    do not add check to common cflags/libs
+    
+    Only the unittests use these flags, so don't go linking them in for
+    the main library too.
+
+commit 3b776f38b9fe2903fd7a4af9d9ca9edd159cea0b
+Author: Mike Frysinger <vapier@gentoo.org>
+Date:   Sat Jun 14 01:54:10 2014 -0400
+
+    fix test operator
+    
+    The == operator is not in POSIX.
+
+commit 4f8e40458fe9c0da90ba4634d248d4edb9f4b5aa
+Author: Kumar Abhishek <abhishek@theembeddedkitchen.net>
+Date:   Sat May 10 04:32:06 2014 +0700
+
+    runtc.c: Fix compiler warning
+    
+    c was of type char, while getopt returns an int. This
+    caused a compiler warning during build.
+
+commit 783b54337242e5c40da8ffc0fc18babbcd09bc67
+Author: Kumar Abhishek <abhishek@theembeddedkitchen.net>
+Date:   Sat May 10 04:32:05 2014 +0700
+
+    libsigrokdecode: Fix make -j issue with build_runtc
+    
+    The build of runtc caused issues with make -j as runtc
+    was attempted to be linked with libsigrokdecode before
+    libsigrokdecode was linked. Using LDADD to insert
+    libsigrokdecode ensures that it links before runtc,
+    ensuring the build completes correctly.
+
+commit 888bbe38a50a1e3224dcef68686a00e2754e8b47
+Author: Abhishek Kumar <abhishek@theembeddedkitchen.net>
+Date:   Fri May 9 06:05:00 2014 +0700
+
+    Add python as a pkg-config dependency
+    
+    The current libsigrokdecode build passes the python
+    CPPFLAGS and LDFLAGS directly into libsigrokdecode.pc.in.
+    This leads to issues while cross-compiling as while using
+    PKG_CONFIG_SYSROOT_DIR, there is a chance of the prefix
+    being duplicated. We now, while detecting the installation
+    of python (cross or normal), add a dependency for the
+    module name in the pkgconfig file (from configure.ac).
 
 commit 95e2b2f92b144e1b0edf29819a8585dbbc00f169
 Author: Uwe Hermann <uwe@hermann-uwe.de>

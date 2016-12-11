@@ -18,20 +18,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#include "../libsigrokdecode.h" /* First, to avoid compiler warning. */
+#include <config.h>
+#include <libsigrokdecode.h> /* First, to avoid compiler warning. */
 #include <stdlib.h>
 #include <check.h>
 #include "lib.h"
-
-static void setup(void)
-{
-	/* Silence libsigrokdecode while the unit tests run. */
-	srd_log_loglevel_set(SRD_LOG_NONE);
-}
-
-static void teardown(void)
-{
-}
 
 /*
  * Check whether srd_inst_new() works.
@@ -42,7 +33,7 @@ START_TEST(test_inst_new)
 	struct srd_session *sess;
 	struct srd_decoder_inst *inst;
 
-	srd_init(DECODERS_DIR);
+	srd_init(DECODERS_TESTDIR);
 	srd_decoder_load("uart");
 	srd_session_new(&sess);
 	inst = srd_inst_new(sess, "uart", NULL);
@@ -62,7 +53,7 @@ START_TEST(test_inst_new_multiple)
 
 	inst1 = inst2 = inst3 = NULL;
 
-	srd_init(DECODERS_DIR);
+	srd_init(DECODERS_TESTDIR);
 	srd_decoder_load_all();
 	srd_session_new(&sess);
 
@@ -99,7 +90,7 @@ START_TEST(test_inst_option_set_empty)
 	struct srd_decoder_inst *inst;
 	GHashTable *options;
 
-	srd_init(DECODERS_DIR);
+	srd_init(DECODERS_TESTDIR);
 	srd_decoder_load_all();
 	srd_session_new(&sess);
 	inst = srd_inst_new(sess, "uart", NULL);
@@ -123,7 +114,7 @@ START_TEST(test_inst_option_set_bogus)
 	struct srd_decoder_inst *inst;
 	GHashTable *options;
 
-	srd_init(DECODERS_DIR);
+	srd_init(DECODERS_TESTDIR);
 	srd_decoder_load_all();
 	srd_session_new(&sess);
 	inst = srd_inst_new(sess, "uart", NULL);
@@ -158,13 +149,13 @@ Suite *suite_inst(void)
 	s = suite_create("inst");
 
 	tc = tcase_create("new");
-	tcase_add_checked_fixture(tc, setup, teardown);
+	tcase_add_checked_fixture(tc, srdtest_setup, srdtest_teardown);
 	tcase_add_test(tc, test_inst_new);
 	tcase_add_test(tc, test_inst_new_multiple);
 	suite_add_tcase(s, tc);
 
 	tc = tcase_create("option");
-	tcase_add_checked_fixture(tc, setup, teardown);
+	tcase_add_checked_fixture(tc, srdtest_setup, srdtest_teardown);
 	tcase_add_test(tc, test_inst_option_set_empty);
 	tcase_add_test(tc, test_inst_option_set_bogus);
 	suite_add_tcase(s, tc);

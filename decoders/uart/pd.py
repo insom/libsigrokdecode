@@ -19,6 +19,7 @@
 ##
 
 import sigrokdecode as srd
+from math import floor, ceil
 
 '''
 OUTPUT_PYTHON format:
@@ -28,9 +29,10 @@ Packet:
 
 This is the list of <ptype>s and their respective <pdata> values:
  - 'STARTBIT': The data is the (integer) value of the start bit (0/1).
- - 'DATA': The data is the (integer) value of the UART data. Valid values
-   range from 0 to 512 (as the data can be up to 9 bits in size).
- - 'DATABITS': List of data bits and their ss/es numbers.
+ - 'DATA': This is always a tuple containing two items:
+   - 1st item: the (integer) value of the UART data. Valid values
+     range from 0 to 512 (as the data can be up to 9 bits in size).
+   - 2nd item: the list of individual data bits and their ss/es numbers.
  - 'PARITYBIT': The data is the (integer) value of the parity bit (0/1).
  - 'STOPBIT': The data is the (integer) value of the stop bit (0 or 1).
  - 'INVALID STARTBIT': The data is the (integer) value of the start bit (0/1).
@@ -66,8 +68,12 @@ def parity_ok(parity_type, parity_bit, data, num_data_bits):
         return (ones % 2) == 1
     elif parity_type == 'even':
         return (ones % 2) == 0
-    else:
-        raise Exception('Invalid parity type: %d' % parity_type)
+
+class SamplerateError(Exception):
+    pass
+
+class ChannelError(Exception):
+    pass
 
 class Decoder(srd.Decoder):
     api_version = 2
@@ -98,7 +104,10 @@ class Decoder(srd.Decoder):
             'values': ('lsb-first', 'msb-first')},
         {'id': 'format', 'desc': 'Data format', 'default': 'ascii',
             'values': ('ascii', 'dec', 'hex', 'oct', 'bin')},
-        # TODO: Options to invert the signal(s).
+        {'id': 'invert_rx', 'desc': 'Invert RX?', 'default': 'no',
+            'values': ('yes', 'no')},
+        {'id': 'invert_tx', 'desc': 'Invert TX?', 'default': 'no',
+            'values': ('yes', 'no')},
     )
     annotations = (
         ('rx-data', 'RX data'),
@@ -129,26 +138,27 @@ class Decoder(srd.Decoder):
         ('tx', 'TX dump'),
         ('rxtx', 'RX/TX dump'),
     )
+    idle_state = ['WAIT FOR START BIT', 'WAIT FOR START BIT']
 
     def putx(self, rxtx, data):
-        s, halfbit = self.startsample[rxtx], int(self.bit_width / 2)
-        self.put(s - halfbit, self.samplenum + halfbit, self.out_ann, data)
+        s, halfbit = self.startsample[rxtx], self.bit_width / 2.0
+        self.put(s - floor(halfbit), self.samplenum + ceil(halfbit), self.out_ann, data)
 
     def putpx(self, rxtx, data):
-        s, halfbit = self.startsample[rxtx], int(self.bit_width / 2)
-        self.put(s - halfbit, self.samplenum + halfbit, self.out_python, data)
+        s, halfbit = self.startsample[rxtx], self.bit_width / 2.0
+        self.put(s - floor(halfbit), self.samplenum + ceil(halfbit), self.out_python, data)
 
     def putg(self, data):
-        s, halfbit = self.samplenum, int(self.bit_width / 2)
-        self.put(s - halfbit, s + halfbit, self.out_ann, data)
+        s, halfbit = self.samplenum, self.bit_width / 2.0
+        self.put(s - floor(halfbit), s + ceil(halfbit), self.out_ann, data)
 
     def putp(self, data):
-        s, halfbit = self.samplenum, int(self.bit_width / 2)
-        self.put(s - halfbit, s + halfbit, self.out_python, data)
+        s, halfbit = self.samplenum, self.bit_width / 2.0
+        self.put(s - floor(halfbit), s + ceil(halfbit), self.out_python, data)
 
     def putbin(self, rxtx, data):
-        s, halfbit = self.startsample[rxtx], int(self.bit_width / 2)
-        self.put(s - halfbit, self.samplenum + halfbit, self.out_bin, data)
+        s, halfbit = self.startsample[rxtx], self.bit_width / 2.0
+        self.put(s - floor(halfbit), self.samplenum + ceil(halfbit), self.out_binary, data)
 
     def __init__(self, **kwargs):
         self.samplerate = None
@@ -162,17 +172,17 @@ class Decoder(srd.Decoder):
         self.startsample = [-1, -1]
         self.state = ['WAIT FOR START BIT', 'WAIT FOR START BIT']
         self.oldbit = [1, 1]
-        self.oldpins = [1, 1]
+        self.oldpins = [-1, -1]
         self.databits = [[], []]
 
     def start(self):
         self.out_python = self.register(srd.OUTPUT_PYTHON)
-        self.out_bin = self.register(srd.OUTPUT_BINARY)
+        self.out_binary = self.register(srd.OUTPUT_BINARY)
         self.out_ann = self.register(srd.OUTPUT_ANN)
 
     def metadata(self, key, value):
         if key == srd.SRD_CONF_SAMPLERATE:
-            self.samplerate = value;
+            self.samplerate = value
             # The width of one UART bit in number of samples.
             self.bit_width = float(self.samplerate) / float(self.options['baudrate'])
 
@@ -181,7 +191,9 @@ class Decoder(srd.Decoder):
         # bitpos is the samplenumber which is in the middle of the
         # specified UART bit (0 = start bit, 1..x = data, x+1 = parity bit
         # (if used) or the first stop bit, and so on).
-        bitpos = self.frame_start[rxtx] + (self.bit_width / 2.0)
+        # The samples within bit are 0, 1, ..., (bit_width - 1), therefore
+        # index of the middle sample within bit window is (bit_width - 1) / 2.
+        bitpos = self.frame_start[rxtx] + (self.bit_width - 1) / 2.0
         bitpos += bitnum * self.bit_width
         if self.samplenum >= bitpos:
             return True
@@ -214,6 +226,7 @@ class Decoder(srd.Decoder):
         # The startbit must be 0. If not, we report an error.
         if self.startbit[rxtx] != 0:
             self.putp(['INVALID STARTBIT', rxtx, self.startbit[rxtx]])
+            self.putg([rxtx + 10, ['Frame error', 'Frame err', 'FE']])
             # TODO: Abort? Ignore rest of the frame?
 
         self.cur_data_bit[rxtx] = 0
@@ -239,12 +252,9 @@ class Decoder(srd.Decoder):
             self.databyte[rxtx] >>= 1
             self.databyte[rxtx] |= \
                 (signal << (self.options['num_data_bits'] - 1))
-        elif self.options['bit_order'] == 'msb-first':
+        else:
             self.databyte[rxtx] <<= 1
             self.databyte[rxtx] |= (signal << 0)
-        else:
-            raise Exception('Invalid bit order value: %s',
-                            self.options['bit_order'])
 
         self.putg([rxtx + 12, ['%d' % signal]])
 
@@ -259,8 +269,8 @@ class Decoder(srd.Decoder):
 
         self.state[rxtx] = 'GET PARITY BIT'
 
-        self.putpx(rxtx, ['DATABITS', rxtx, self.databits[rxtx]])
-        self.putpx(rxtx, ['DATA', rxtx, self.databyte[rxtx]])
+        self.putpx(rxtx, ['DATA', rxtx,
+            (self.databyte[rxtx], self.databits[rxtx])])
 
         b, f = self.databyte[rxtx], self.options['format']
         if f == 'ascii':
@@ -274,11 +284,9 @@ class Decoder(srd.Decoder):
             self.putx(rxtx, [rxtx, [oct(b)[2:].zfill(3)]])
         elif f == 'bin':
             self.putx(rxtx, [rxtx, [bin(b)[2:].zfill(8)]])
-        else:
-            raise Exception('Invalid data format option: %s' % f)
 
-        self.putbin(rxtx, (rxtx, bytes([b])))
-        self.putbin(rxtx, (2, bytes([b])))
+        self.putbin(rxtx, [rxtx, bytes([b])])
+        self.putbin(rxtx, [2, bytes([b])])
 
         self.databits = [[], []]
 
@@ -318,7 +326,7 @@ class Decoder(srd.Decoder):
         # Stop bits must be 1. If not, we report an error.
         if self.stopbit1[rxtx] != 1:
             self.putp(['INVALID STOPBIT', rxtx, self.stopbit1[rxtx]])
-            self.putg([rxtx + 8, ['Frame error', 'Frame err', 'FE']])
+            self.putg([rxtx + 10, ['Frame error', 'Frame err', 'FE']])
             # TODO: Abort? Ignore the frame? Other?
 
         self.state[rxtx] = 'WAIT FOR START BIT'
@@ -327,20 +335,27 @@ class Decoder(srd.Decoder):
         self.putg([rxtx + 4, ['Stop bit', 'Stop', 'T']])
 
     def decode(self, ss, es, data):
-        if self.samplerate is None:
-            raise Exception("Cannot decode without samplerate.")
+        if not self.samplerate:
+            raise SamplerateError('Cannot decode without samplerate.')
         for (self.samplenum, pins) in data:
 
-            # Note: Ignoring identical samples here for performance reasons
-            # is not possible for this PD, at least not in the current state.
-            # if self.oldpins == pins:
-            #     continue
+            # We want to skip identical samples for performance reasons but,
+            # for now, we can only do that when we are in the idle state
+            # (meaning both channels are waiting for the start bit).
+            if self.state == self.idle_state and self.oldpins == pins:
+                continue
+
             self.oldpins, (rx, tx) = pins, pins
+
+            if self.options['invert_rx'] == 'yes':
+                rx = not rx
+            if self.options['invert_tx'] == 'yes':
+                tx = not tx
 
             # Either RX or TX (but not both) can be omitted.
             has_pin = [rx in (0, 1), tx in (0, 1)]
             if has_pin == [False, False]:
-                raise Exception('Either TX or RX (or both) pins required.')
+                raise ChannelError('Either TX or RX (or both) pins required.')
 
             # State machine.
             for rxtx in (RX, TX):
@@ -360,9 +375,6 @@ class Decoder(srd.Decoder):
                     self.get_parity_bit(rxtx, signal)
                 elif self.state[rxtx] == 'GET STOP BITS':
                     self.get_stop_bits(rxtx, signal)
-                else:
-                    raise Exception('Invalid state: %s' % self.state[rxtx])
 
                 # Save current RX/TX values for the next round.
                 self.oldbit[rxtx] = signal
-

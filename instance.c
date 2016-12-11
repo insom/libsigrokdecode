@@ -18,9 +18,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "libsigrokdecode.h" /* First, so we avoid a _POSIX_C_SOURCE warning. */
-#include "libsigrokdecode-internal.h"
-#include "config.h"
+#include <config.h>
+#include "libsigrokdecode-internal.h" /* First, so we avoid a _POSIX_C_SOURCE warning. */
+#include "libsigrokdecode.h"
 #include <glib.h>
 #include <inttypes.h>
 #include <stdlib.h>
@@ -30,8 +30,8 @@
 
 extern SRD_PRIV GSList *sessions;
 
-/* type_logic.c */
-extern SRD_PRIV PyTypeObject srd_logic_type;
+/* module_sigrokdecode.c */
+extern SRD_PRIV PyObject *srd_logic_type;
 
 /** @endcond */
 
@@ -64,11 +64,11 @@ extern SRD_PRIV PyTypeObject srd_logic_type;
 SRD_API int srd_inst_option_set(struct srd_decoder_inst *di,
 		GHashTable *options)
 {
-    struct srd_decoder_option *sdo;
+	struct srd_decoder_option *sdo;
 	PyObject *py_di_options, *py_optval;
 	GVariant *value;
-    GSList *l;
-    double val_double;
+	GSList *l;
+	double val_double;
 	gint64 val_int;
 	int ret;
 	const char *val_str;
@@ -96,7 +96,7 @@ SRD_API int srd_inst_option_set(struct srd_decoder_inst *di,
 	}
 
 	ret = SRD_ERR_PYTHON;
-    py_optval = NULL;
+	py_optval = NULL;
 
 	/*
 	 * The 'options' tuple is a class variable, but we need to
@@ -110,59 +110,60 @@ SRD_API int srd_inst_option_set(struct srd_decoder_inst *di,
 	py_di_options = PyDict_New();
 	PyObject_SetAttrString(di->py_inst, "options", py_di_options);
 
-    for (l = di->decoder->options; l; l = l->next) {
-        sdo = l->data;
-        if ((value = g_hash_table_lookup(options, sdo->id))) {
-            /* A value was supplied for this option. */
-            if (!g_variant_type_equal(g_variant_get_type(value),
-                    g_variant_get_type(sdo->def))) {
-                srd_err("Option '%s' should have the same type "
-                        "as the default value.", sdo->id);
-                goto err_out;
-            }
-        } else {
-            /* Use default for this option. */
-            value = sdo->def;
-        }
-        if (g_variant_is_of_type(value, G_VARIANT_TYPE_STRING)) {
-            val_str = g_variant_get_string(value, NULL);
-            if (!(py_optval = PyUnicode_FromString(val_str))) {
-                /* Some UTF-8 encoding error. */
-                PyErr_Clear();
-                srd_err("Option '%s' requires a UTF-8 string value.", sdo->id);
-                goto err_out;
-            }
-        } else if (g_variant_is_of_type(value, G_VARIANT_TYPE_INT64)) {
-            val_int = g_variant_get_int64(value);
-            if (!(py_optval = PyLong_FromLong(val_int))) {
-                /* ValueError Exception */
-                PyErr_Clear();
-                srd_err("Option '%s' has invalid integer value.", sdo->id);
-                goto err_out;
-            }
-        } else if (g_variant_is_of_type(value, G_VARIANT_TYPE_DOUBLE)) {
-            val_double = g_variant_get_double(value);
-            if (!(py_optval = PyFloat_FromDouble(val_double))) {
-                /* ValueError Exception */
-                PyErr_Clear();
-                srd_err("Option '%s' has invalid float value.", sdo->id);
-                goto err_out;
-            }
-        }
+	for (l = di->decoder->options; l; l = l->next) {
+		sdo = l->data;
+		if ((value = g_hash_table_lookup(options, sdo->id))) {
+			/* A value was supplied for this option. */
+			if (!g_variant_type_equal(g_variant_get_type(value),
+				  g_variant_get_type(sdo->def))) {
+				srd_err("Option '%s' should have the same type "
+					"as the default value.", sdo->id);
+				goto err_out;
+			}
+		} else {
+			/* Use default for this option. */
+			value = sdo->def;
+		}
+		if (g_variant_is_of_type(value, G_VARIANT_TYPE_STRING)) {
+			val_str = g_variant_get_string(value, NULL);
+			if (!(py_optval = PyUnicode_FromString(val_str))) {
+				/* Some UTF-8 encoding error. */
+				PyErr_Clear();
+				srd_err("Option '%s' requires a UTF-8 string value.", sdo->id);
+				goto err_out;
+			}
+		} else if (g_variant_is_of_type(value, G_VARIANT_TYPE_INT64)) {
+			val_int = g_variant_get_int64(value);
+			if (!(py_optval = PyLong_FromLong(val_int))) {
+				/* ValueError Exception */
+				PyErr_Clear();
+				srd_err("Option '%s' has invalid integer value.", sdo->id);
+				goto err_out;
+			}
+		} else if (g_variant_is_of_type(value, G_VARIANT_TYPE_DOUBLE)) {
+			val_double = g_variant_get_double(value);
+			if (!(py_optval = PyFloat_FromDouble(val_double))) {
+				/* ValueError Exception */
+				PyErr_Clear();
+				srd_err("Option '%s' has invalid float value.",
+					sdo->id);
+				goto err_out;
+			}
+		}
 		if (PyDict_SetItemString(py_di_options, sdo->id, py_optval) == -1)
 			goto err_out;
-        /* Not harmful even if we used the default. */
-        g_hash_table_remove(options, sdo->id);
-    }
-    if (g_hash_table_size(options) != 0)
-        srd_warn("Unknown options specified for '%s'", di->inst_id);
+		/* Not harmful even if we used the default. */
+		g_hash_table_remove(options, sdo->id);
+	}
+	if (g_hash_table_size(options) != 0)
+		srd_warn("Unknown options specified for '%s'", di->inst_id);
 
 	ret = SRD_OK;
 
 err_out:
 	Py_XDECREF(py_optval);
 	if (PyErr_Occurred()) {
-		srd_exception_catch("Stray exception in srd_inst_option_set().");
+		srd_exception_catch("Stray exception in srd_inst_option_set()");
 		ret = SRD_ERR_PYTHON;
 	}
 
@@ -186,16 +187,13 @@ static gint compare_channel_id(const struct srd_channel *pdch,
  * @param new_channels A GHashTable of channels to set. Key is channel name,
  *                     value is the channel number. Samples passed to this
  *                     instance will be arranged in this order.
- * @param unit_size Number of bytes per sample in the data stream to be passed
- *                  to the decoder. The highest channel index specified in the
- *                  channel map must lie within a sample unit.
  *
  * @return SRD_OK upon success, a (negative) error code otherwise.
  *
- * @since 0.3.0
+ * @since 0.4.0
  */
 SRD_API int srd_inst_channel_set_all(struct srd_decoder_inst *di,
-		GHashTable *new_channels, int unit_size)
+		GHashTable *new_channels)
 {
 	GVariant *channel_val;
 	GList *l;
@@ -204,8 +202,8 @@ SRD_API int srd_inst_channel_set_all(struct srd_decoder_inst *di,
 	int *new_channelmap, new_channelnum, num_required_channels, i;
 	char *channel_id;
 
-	srd_dbg("Setting channels for instance %s with list of %d channels, "
-		"unitsize %d.", di->inst_id, g_hash_table_size(new_channels), unit_size);
+	srd_dbg("Setting channels for instance %s with list of %d channels.",
+		di->inst_id, g_hash_table_size(new_channels));
 
 	if (g_hash_table_size(new_channels) == 0)
 		/* No channels provided. */
@@ -218,12 +216,7 @@ SRD_API int srd_inst_channel_set_all(struct srd_decoder_inst *di,
 		return SRD_ERR_ARG;
 	}
 
-	new_channelmap = NULL;
-
-	if (!(new_channelmap = g_try_malloc(sizeof(int) * di->dec_num_channels))) {
-		srd_err("Failed to g_malloc() new channel map.");
-		return SRD_ERR_MALLOC;
-	}
+	new_channelmap = g_malloc(sizeof(int) * di->dec_num_channels);
 
 	/*
 	 * For now, map all indexes to channel -1 (can be overridden later).
@@ -243,19 +236,13 @@ SRD_API int srd_inst_channel_set_all(struct srd_decoder_inst *di,
 			return SRD_ERR_ARG;
 		}
 		new_channelnum = g_variant_get_int32(channel_val);
-		if (new_channelnum >= 8 * unit_size) {
-			srd_err("Channel index %d not within data unit (%d bit).",
-				new_channelnum, 8 * unit_size);
-			g_free(new_channelmap);
-			return SRD_ERR_ARG;
-		}
 		if (!(sl = g_slist_find_custom(di->decoder->channels, channel_id,
 				(GCompareFunc)compare_channel_id))) {
 			/* Fall back on optional channels. */
 			if (!(sl = g_slist_find_custom(di->decoder->opt_channels,
-			     channel_id, (GCompareFunc) compare_channel_id))) {
+			     channel_id, (GCompareFunc)compare_channel_id))) {
 				srd_err("Protocol decoder %s has no channel "
-						"'%s'.", di->decoder->name, channel_id);
+					"'%s'.", di->decoder->name, channel_id);
 				g_free(new_channelmap);
 				return SRD_ERR_ARG;
 			}
@@ -265,13 +252,12 @@ SRD_API int srd_inst_channel_set_all(struct srd_decoder_inst *di,
 		srd_dbg("Setting channel mapping: %s (index %d) = channel %d.",
 			pdch->id, pdch->order, new_channelnum);
 	}
-	di->data_unitsize = unit_size;
 
 	srd_dbg("Final channel map:");
 	num_required_channels = g_slist_length(di->decoder->channels);
 	for (i = 0; i < di->dec_num_channels; i++) {
 		srd_dbg(" - index %d = channel %d (%s)", i, new_channelmap[i],
-		        (i < num_required_channels) ? "required" : "optional");
+			(i < num_required_channels) ? "required" : "optional");
 	}
 
 	/* Report an error if not all required channels were specified. */
@@ -323,10 +309,7 @@ SRD_API struct srd_decoder_inst *srd_inst_new(struct srd_session *sess,
 		return NULL;
 	}
 
-	if (!(di = g_try_malloc0(sizeof(struct srd_decoder_inst)))) {
-		srd_err("Failed to g_malloc() instance.");
-		return NULL;
-	}
+	di = g_malloc0(sizeof(struct srd_decoder_inst));
 
 	di->decoder = dec;
 	di->sess = sess;
@@ -344,31 +327,21 @@ SRD_API struct srd_decoder_inst *srd_inst_new(struct srd_session *sess,
 	di->dec_num_channels = g_slist_length(di->decoder->channels) +
 			g_slist_length(di->decoder->opt_channels);
 	if (di->dec_num_channels) {
-		if (!(di->dec_channelmap =
-				g_try_malloc(sizeof(int) * di->dec_num_channels))) {
-			srd_err("Failed to g_malloc() channel map.");
-			g_free(di);
-			return NULL;
-		}
+		di->dec_channelmap =
+				g_malloc(sizeof(int) * di->dec_num_channels);
 		for (i = 0; i < di->dec_num_channels; i++)
 			di->dec_channelmap[i] = i;
-		di->data_unitsize = (di->dec_num_channels + 7) / 8;
 		/*
 		 * Will be used to prepare a sample at every iteration
 		 * of the instance's decode() method.
 		 */
-		if (!(di->channel_samples = g_try_malloc(di->dec_num_channels))) {
-			srd_err("Failed to g_malloc() sample buffer.");
-			g_free(di->dec_channelmap);
-			g_free(di);
-			return NULL;
-		}
+		di->channel_samples = g_malloc(di->dec_num_channels);
 	}
 
 	/* Create a new instance of this decoder class. */
 	if (!(di->py_inst = PyObject_CallObject(dec->py_dec, NULL))) {
 		if (PyErr_Occurred())
-			srd_exception_catch("failed to create %s instance: ",
+			srd_exception_catch("Failed to create %s instance",
 					decoder_id);
 		g_free(di->dec_channelmap);
 		g_free(di);
@@ -421,7 +394,7 @@ SRD_API int srd_inst_stack(struct srd_session *sess,
 	/* Stack on top of source di. */
 	di_bottom->next_di = g_slist_append(di_bottom->next_di, di_top);
 
-	srd_dbg("Stacked %s on top of %s.", di_top->inst_id, di_bottom->inst_id);
+	srd_dbg("Stacked %s onto %s.", di_top->inst_id, di_bottom->inst_id);
 
 	return SRD_OK;
 }
@@ -532,7 +505,7 @@ SRD_PRIV int srd_inst_start(struct srd_decoder_inst *di)
 			di->inst_id);
 
 	if (!(py_res = PyObject_CallMethod(di->py_inst, "start", NULL))) {
-		srd_exception_catch("Protocol decoder instance %s: ",
+		srd_exception_catch("Protocol decoder instance %s",
 				di->inst_id);
 		return SRD_ERR_PYTHON;
 	}
@@ -558,23 +531,20 @@ SRD_PRIV int srd_inst_start(struct srd_decoder_inst *di)
  * 			  set, relative to the start of capture.
  * @param inbuf The buffer to decode. Must not be NULL.
  * @param inbuflen Length of the buffer. Must be > 0.
+ * @param unitsize The number of bytes per sample.
  *
  * @return SRD_OK upon success, a (negative) error code otherwise.
  *
  * @private
  *
- * @since 0.1.0
+ * @since 0.4.0
  */
 SRD_PRIV int srd_inst_decode(const struct srd_decoder_inst *di,
 		uint64_t start_samplenum, uint64_t end_samplenum,
-		const uint8_t *inbuf, uint64_t inbuflen)
+		const uint8_t *inbuf, uint64_t inbuflen, uint64_t unitsize)
 {
 	PyObject *py_res;
 	srd_logic *logic;
-
-	srd_dbg("Calling decode() on instance %s with %" PRIu64 " bytes "
-		"starting at sample %" PRIu64 ".", di->inst_id, inbuflen,
-		start_samplenum);
 
 	/* Return an error upon unusable input. */
 	if (!di) {
@@ -590,11 +560,19 @@ SRD_PRIV int srd_inst_decode(const struct srd_decoder_inst *di,
 		return SRD_ERR_ARG;
 	}
 
+	((struct srd_decoder_inst *)di)->data_unitsize = unitsize;
+
+	srd_dbg("Calling decode(), start sample %" PRIu64 ", end sample %"
+		PRIu64 " (%" PRIu64 " samples, %" PRIu64 " bytes, unitsize = "
+		"%d), instance %s.", start_samplenum, end_samplenum,
+		end_samplenum - start_samplenum, inbuflen, di->data_unitsize,
+		di->inst_id);
+
 	/*
 	 * Create new srd_logic object. Each iteration around the PD's loop
 	 * will fill one sample into this object.
 	 */
-	logic = PyObject_New(srd_logic, &srd_logic_type);
+	logic = PyObject_New(srd_logic, (PyTypeObject *)srd_logic_type);
 	Py_INCREF(logic);
 	logic->di = (struct srd_decoder_inst *)di;
 	logic->start_samplenum = start_samplenum;
@@ -607,7 +585,8 @@ SRD_PRIV int srd_inst_decode(const struct srd_decoder_inst *di,
 	Py_IncRef(di->py_inst);
 	if (!(py_res = PyObject_CallMethod(di->py_inst, "decode",
 			"KKO", start_samplenum, end_samplenum, logic))) {
-		srd_exception_catch("Protocol decoder instance %s: ", di->inst_id);
+		srd_exception_catch("Protocol decoder instance %s",
+				di->inst_id);
 		return SRD_ERR_PYTHON;
 	}
 	Py_DecRef(py_res);
@@ -661,4 +640,3 @@ SRD_PRIV void srd_inst_free_all(struct srd_session *sess, GSList *stack)
 }
 
 /** @} */
-

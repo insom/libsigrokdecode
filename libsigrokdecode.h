@@ -19,10 +19,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#ifndef LIBSIGROKDECODE_SIGROKDECODE_H
-#define LIBSIGROKDECODE_SIGROKDECODE_H
+#ifndef LIBSIGROKDECODE_LIBSIGROKDECODE_H
+#define LIBSIGROKDECODE_LIBSIGROKDECODE_H
 
-#include <Python.h> /* First, so we avoid a _POSIX_C_SOURCE warning. */
 #include <stdint.h>
 #include <glib.h>
 
@@ -180,14 +179,14 @@ struct srd_decoder {
 	 */
 	GSList *binary;
 
-	/** List of decoder options.  */
+	/** List of decoder options. */
 	GSList *options;
 
 	/** Python module. */
-	PyObject *py_mod;
+	void *py_mod;
 
 	/** sigrokdecode.Decoder class. */
-	PyObject *py_dec;
+	void *py_dec;
 };
 
 /**
@@ -209,7 +208,7 @@ struct srd_decoder_option {
 	char *id;
 	char *desc;
 	GVariant *def;
-    GSList *values;
+	GSList *values;
 };
 
 struct srd_decoder_annotation_row {
@@ -221,7 +220,7 @@ struct srd_decoder_annotation_row {
 struct srd_decoder_inst {
 	struct srd_decoder *decoder;
 	struct srd_session *sess;
-	PyObject *py_inst;
+	void *py_inst;
 	char *inst_id;
 	GSList *pd_output;
 	int dec_num_channels;
@@ -249,7 +248,7 @@ struct srd_proto_data {
 	void *data;
 };
 struct srd_proto_data_annotation {
-	int ann_format;
+	int ann_class;
 	char **ann_text;
 };
 struct srd_proto_data_binary {
@@ -267,19 +266,6 @@ struct srd_pd_callback {
 	void *cb_data;
 };
 
-/* Custom Python types: */
-
-typedef struct {
-	PyObject_HEAD
-	struct srd_decoder_inst *di;
-	uint64_t start_samplenum;
-	unsigned int itercnt;
-	uint8_t *inbuf;
-	uint64_t inbuflen;
-	PyObject *sample;
-} srd_logic;
-
-
 /* srd.c */
 SRD_API int srd_init(const char *path);
 SRD_API int srd_exit(void);
@@ -291,7 +277,7 @@ SRD_API int srd_session_metadata_set(struct srd_session *sess, int key,
 		GVariant *data);
 SRD_API int srd_session_send(struct srd_session *sess,
 		uint64_t start_samplenum, uint64_t end_samplenum,
-		const uint8_t *inbuf, uint64_t inbuflen);
+		const uint8_t *inbuf, uint64_t inbuflen, uint64_t unitsize);
 SRD_API int srd_session_destroy(struct srd_session *sess);
 SRD_API int srd_pd_output_callback_add(struct srd_session *sess,
 		int output_type, srd_pd_output_callback cb, void *cb_data);
@@ -309,7 +295,7 @@ SRD_API int srd_decoder_unload_all(void);
 SRD_API int srd_inst_option_set(struct srd_decoder_inst *di,
 		GHashTable *options);
 SRD_API int srd_inst_channel_set_all(struct srd_decoder_inst *di,
-		GHashTable *channels, int unit_size);
+		GHashTable *channels);
 SRD_API struct srd_decoder_inst *srd_inst_new(struct srd_session *sess,
 		const char *id, GHashTable *options);
 SRD_API int srd_inst_stack(struct srd_session *sess,
@@ -324,8 +310,6 @@ SRD_API int srd_log_loglevel_set(int loglevel);
 SRD_API int srd_log_loglevel_get(void);
 SRD_API int srd_log_callback_set(srd_log_callback cb, void *cb_data);
 SRD_API int srd_log_callback_set_default(void);
-SRD_API int srd_log_logdomain_set(const char *logdomain);
-SRD_API char *srd_log_logdomain_get(void);
 
 /* error.c */
 SRD_API const char *srd_strerror(int error_code);

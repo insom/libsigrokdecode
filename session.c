@@ -18,9 +18,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "libsigrokdecode.h" /* First, so we avoid a _POSIX_C_SOURCE warning. */
-#include "libsigrokdecode-internal.h"
-#include "config.h"
+#include <config.h>
+#include "libsigrokdecode-internal.h" /* First, so we avoid a _POSIX_C_SOURCE warning. */
+#include "libsigrokdecode.h"
 #include <inttypes.h>
 #include <glib.h>
 
@@ -76,8 +76,7 @@ SRD_API int srd_session_new(struct srd_session **sess)
 		return SRD_ERR_ARG;
 	}
 
-	if (!(*sess = g_try_malloc(sizeof(struct srd_session))))
-		return SRD_ERR_MALLOC;
+	*sess = g_malloc(sizeof(struct srd_session));
 	(*sess)->session_id = ++max_session_id;
 	(*sess)->di_list = (*sess)->callbacks = NULL;
 
@@ -213,23 +212,24 @@ SRD_API int srd_session_metadata_set(struct srd_session *sess, int key,
  * in channel order, in the least amount of space possible. The default
  * channel set consists of all required channels + all optional channels.
  *
- * The size of a sample in inbuf is the unit size passed to
- * srd_inst_channel_set_all(). If no channel map has been configured, it is
- * the minimum number of bytes needed to store the default channels.
+ * The size of a sample in inbuf is 'unitsize' bytes. If no channel map
+ * has been configured, it is the minimum number of bytes needed to store
+ * the default channels.
  *
  * @param sess The session to use.
  * @param start_samplenum The sample number of the first sample in this chunk.
  * @param end_samplenum The sample number of the last sample in this chunk.
  * @param inbuf Pointer to sample data.
  * @param inbuflen Length in bytes of the buffer.
+ * @param unitsize The number of bytes per sample.
  *
  * @return SRD_OK upon success, a (negative) error code otherwise.
  *
- * @since 0.3.0
+ * @since 0.4.0
  */
 SRD_API int srd_session_send(struct srd_session *sess,
 		uint64_t start_samplenum, uint64_t end_samplenum,
-		const uint8_t *inbuf, uint64_t inbuflen)
+		const uint8_t *inbuf, uint64_t inbuflen, uint64_t unitsize)
 {
 	GSList *d;
 	int ret;
@@ -239,13 +239,9 @@ SRD_API int srd_session_send(struct srd_session *sess,
 		return SRD_ERR_ARG;
 	}
 
-	srd_dbg("Calling decode() on all instances with starting sample "
-			"number %" PRIu64 ", %" PRIu64 " bytes at 0x%p",
-			start_samplenum, inbuflen, inbuf);
-
 	for (d = sess->di_list; d; d = d->next) {
 		if ((ret = srd_inst_decode(d->data, start_samplenum,
-				end_samplenum, inbuf, inbuflen)) != SRD_OK)
+				end_samplenum, inbuf, inbuflen, unitsize)) != SRD_OK)
 			return ret;
 	}
 
@@ -312,11 +308,7 @@ SRD_API int srd_pd_output_callback_add(struct srd_session *sess,
 
 	srd_dbg("Registering new callback for output type %d.", output_type);
 
-	if (!(pd_cb = g_try_malloc(sizeof(struct srd_pd_callback)))) {
-		srd_err("Failed to g_malloc() struct srd_pd_callback.");
-		return SRD_ERR_MALLOC;
-	}
-
+	pd_cb = g_malloc(sizeof(struct srd_pd_callback));
 	pd_cb->output_type = output_type;
 	pd_cb->cb = cb;
 	pd_cb->cb_data = cb_data;
