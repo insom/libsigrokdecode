@@ -1,3 +1,163 @@
+commit bc12b1a236fb45f23210f11004414fa9b8172b21
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Dec 26 23:17:59 2016 +0100
+
+    configure.ac: Bump package version to 0.4.1.
+
+commit ca50668ea24eb8ace8c4e80a191b38faa338d628
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Dec 26 23:15:41 2016 +0100
+
+    configure.ac: Bump libtool/library version from 3:0:0 to 3:1:0.
+    
+    The libtool current:revision:age numbers change from 3:0:0 to 3:1:0.
+    
+    Details:
+    http://www.gnu.org/software/libtool/manual/libtool.html#Updating-version-info
+    
+    This changes the library filename (e.g. on Linux) from
+    libsigrokdecode.so.3.0.0 to libsigrokdecode.so.3.0.1, the SONAME
+    (+symlink) stays at libsigrokdecode.so.3, though.
+
+commit 25dedf929f200402e9e836da47c56048f8fe4d11
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Dec 26 23:14:31 2016 +0100
+
+    Doxyfile: Set version to 0.4.1.
+
+commit fe6910edcdcaadd1fa96757b8e2608660e6c0448
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Dec 26 23:09:26 2016 +0100
+
+    NEWS: Add list of user-visible changes so far.
+
+commit 043cb80cd557c075aef78c2d21aa39b9805adbbd
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Dec 26 23:28:58 2016 +0100
+
+    configure.ac: Also check for Python 3.6.
+
+commit c7bedf187faebd5376936e156c9339a558bb12e9
+Author: Gerhard Sittig <gerhard.sittig@gmx.net>
+Date:   Sun Nov 20 16:51:47 2016 +0100
+
+    build support: sort list of installed items, factor out pretty printer
+    
+    Alpha-sort the list of installed items, to support developers which scan
+    the list for newly added items. Factor out the logic which pretty prints
+    installed items while maintaining a maximum screen output line length.
+
+commit 205e6dbb202ad667eb2dff657d73db8a249dba82
+Author: Karl Palsson <karlp@etactica.com>
+Date:   Tue Nov 29 14:01:22 2016 +0000
+
+    valgrind: free channels
+    
+    Signed-off-by: Karl Palsson <karlp@etactica.com>
+
+commit 231bb99df32ae5453f08ad27f42d34126059cf4b
+Author: Karl Palsson <karlp@etactica.com>
+Date:   Fri Nov 25 13:55:56 2016 +0000
+
+    valgrind: safely iterate lists
+    
+    Old versions triggered valgrind errors as the API method to remove an
+    entry modifies the list that was being iterated.
+    
+    Signed-off-by: Karl Palsson <karlp@etactica.com>
+
+commit db8156ea94cea737a97bd721c3cb8b3922ef7098
+Author: Gerhard Sittig <gerhard.sittig@gmx.net>
+Date:   Sun Oct 16 18:25:29 2016 +0200
+
+    Print error messages when decoders fail load time checks
+    
+    Several checks get applied when loading externally provided protocol
+    decoders. Print error messages when checks fail, so that developers can
+    better resolve issues.
+    
+    The sequence of tests terminates upon the first failed check, while
+    decoders may suffer from several issues at the same time. This is
+    considered acceptable, as it reduces the commit's size and the code's
+    complexity. This commit only adds error messages, and does not change
+    logic/behaviour.
+    
+    Failed API version checks result in two messages: One specific message
+    which reflects the decoder's version and what's supported by the loader,
+    and a generic message that the API version check has failed. This is
+    done to simplify the logic of a rarely used error code path.
+    
+    This commit addresses libsigrokdecode Bug 704, and allows to identify
+    decoders from parallel installations of differing version.
+    
+    This fixes bug #704.
+    
+    Signed-off-by: Gerhard Sittig <gerhard.sittig@gmx.net>
+
+commit 7b62f75e9beb3da64c0f009740fe0156e0694adf
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Aug 25 22:34:55 2016 +0200
+
+    srd_inst_decode(): Return SRD_ERR_ARG if unitsize is 0.
+
+commit 173f85e1072cc0ed2a1099efd7dae0b1023960f6
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Aug 25 22:26:41 2016 +0200
+
+    srd_inst_decode(): Make the code API version dependent.
+
+commit 6ebb97f7aa2499db801610369df61c59b01c5611
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Aug 25 22:22:07 2016 +0200
+
+    Factor out srd_decoder_apiver().
+
+commit 7b849244f6bc98e20281785b6b4842752e163e43
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Aug 25 22:01:04 2016 +0200
+
+    srd_inst_decode(): Improve comments and log messages.
+    
+    Also, drop @since tag (as the function is not public).
+
+commit 5ac1f449d18c46d47293e061f2cda8ed54732224
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Thu Aug 25 21:57:39 2016 +0200
+
+    srd_session_send(): Improve Doxygen comments.
+
+commit 47509b17ad9aecd867de76210fb4130bbe78938e
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Tue May 24 21:42:02 2016 +0200
+
+    Move common/ directory into decoders/.
+    
+    This simplifies cross-platform handling of the Python/decoder paths
+    and module installation/dist a bit and also fixes bug #804.
+
+commit 1a400317a8e6d2599216287814553059bed4d6c5
+Author: Stefan Brüns <stefan.bruens@rwth-aachen.de>
+Date:   Sat Oct 3 16:26:23 2015 +0200
+
+    Supply metadata to stacked decoders
+    
+    Currently only toplevel decoders receive the samplerate, thus stacked
+    decoders are not able to derive e.g. timestamps from the sample number.
+    
+    This fixes bug #664.
+
+commit 30d6d3ba0980ef9f41bc088263d416de0adcdb41
+Author: Bert Vermeulen <bert@biot.com>
+Date:   Thu Apr 21 01:33:49 2016 +0200
+
+    Add common directory for shared modules.
+
+commit fa5f451084e3c11600395acdedb7c5cd4d4221a3
+Author: Uwe Hermann <uwe@hermann-uwe.de>
+Date:   Mon Dec 26 22:20:08 2016 +0100
+
+    Backport current PDs from git mainline.
+
 commit 46fe9a4ab1327b03809fe3e5e288773f3f93e5ea
 Author: Uwe Hermann <uwe@hermann-uwe.de>
 Date:   Fri Jan 29 23:36:58 2016 +0100
@@ -1226,7 +1386,7 @@ Date:   Wed Oct 29 23:31:43 2014 -0400
     Otherwise:
      - Added a meta OUTPUT for the duty cycle average
      - Renamed the polarity option:
-    	'polarity', 'active low/high' are well-understood terms.
+            'polarity', 'active low/high' are well-understood terms.
      - Added comments
     
     Signed-off-by: Sebastien Bourdelin <sebastien.bourdelin@savoirfairelinux.com>
@@ -3022,19 +3182,19 @@ Date:   Sat Jan 18 19:15:41 2014 +0100
     Old sigrok-cli example usage:
     
      $ sigrok-cli -i 2ch-16bit-16khz.sr \
-    	-P i2s:sck=0:ws=1:sd=2,i2s_dump:filename=foo.wav
+            -P i2s:sck=0:ws=1:sd=2,i2s_dump:filename=foo.wav
      $ aplay foo.wav
     
     New sigrok-cli example usage:
     
      $ sigrok-cli -i 2ch-16bit-16khz.sr \
-    	-P i2s:sck=0:ws=1:sd=2 -B i2s=wav > foo.wav
+            -P i2s:sck=0:ws=1:sd=2 -B i2s=wav > foo.wav
      $ aplay foo.wav
     
     New sigrok-cli example usage (piping into other applications):
     
      $ sigrok-cli -i 2ch-16bit-16khz.sr \
-    	-P i2s:sck=0:ws=1:sd=2 -B i2s=wav | aplay -
+            -P i2s:sck=0:ws=1:sd=2 -B i2s=wav | aplay -
 
 commit e8ce01860673214bae97a6b793a7f55e13128dba
 Author: Uwe Hermann <uwe@hermann-uwe.de>
@@ -3443,8 +3603,8 @@ Date:   Wed Nov 27 16:47:04 2013 +0100
     file called 'config' can be created in that protocol decoder's
     directory, with the following content:
     
-    	# comments are ok
-    	extra-install vendorlist.txt commands.txt
+            # comments are ok
+            extra-install vendorlist.txt commands.txt
 
 commit 37b94c205e4c1c43e77e29993108f23066cbce05
 Author: Bert Vermeulen <bert@biot.com>
