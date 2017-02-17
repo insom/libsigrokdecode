@@ -21,7 +21,7 @@
 AC_PREREQ([2.63])
 
 # libsigrokdecode package version number (NOT the same as shared lib version!).
-AC_INIT([libsigrokdecode], [0.4.0],
+AC_INIT([libsigrokdecode], [0.4.1],
 	[sigrok-devel@lists.sourceforge.net], [libsigrokdecode],
 	[http://www.sigrok.org])
 AC_CONFIG_MACRO_DIR([m4])
@@ -63,7 +63,7 @@ SR_PKG_VERSION_SET([SRD_PACKAGE_VERSION], [AC_PACKAGE_VERSION])
 # The algorithm for determining which number to change (and how) is nontrivial!
 # http://www.gnu.org/software/libtool/manual/libtool.html#Updating-version-info
 # Format: current:revision:age.
-SR_LIB_VERSION_SET([SRD_LIB_VERSION], [3:0:0])
+SR_LIB_VERSION_SET([SRD_LIB_VERSION], [3:1:0])
 
 AM_CONDITIONAL([WIN32], [test -z "${host_os##mingw*}" || test -z "${host_os##cygwin*}"])
 
@@ -86,14 +86,14 @@ SR_PKG_CHECK_SUMMARY([srd_pkglibs_summary])
 
 # Python 3 is always needed.
 SR_PKG_CHECK([python3], [SRD_PKGLIBS],
-	[python3 >= 3.2], [python-3.5 >= 3.5], [python-3.4 >= 3.4], [python-3.3 >= 3.3], [python-3.2 >= 3.2])
+	[python3 >= 3.2], [python-3.6 >= 3.6], [python-3.5 >= 3.5], [python-3.4 >= 3.4], [python-3.3 >= 3.3], [python-3.2 >= 3.2])
 AS_IF([test "x$sr_have_python3" = xno],
 	[AC_MSG_ERROR([Cannot find Python 3 development headers.])])
 
 # We also need to find the name of the python3 executable (for 'make install').
 # Some OSes call this python3, some call it python3.2, etc. etc.
 AC_ARG_VAR([PYTHON3], [Python 3 interpreter])
-AC_CHECK_PROGS([PYTHON3], [python3.5 python3.4 python3.3 python3.2 python3])
+AC_CHECK_PROGS([PYTHON3], [python3.6 python3.5 python3.4 python3.3 python3.2 python3])
 AS_IF([test "x$PYTHON3" = x],
 	[AC_MSG_ERROR([Cannot find Python 3 interpreter.])])
 
