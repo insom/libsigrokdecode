@@ -28,7 +28,7 @@ Conflicts: libsigrokdecode2 (<< 0.3.0-2)
 Replaces: libsigrokdecode2 (<< 0.3.0-2)
 Architecture: any
 Multi-Arch: same
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${python3:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: sigrok protocol decoding library - shared library
  libsigrokdecode is a shared library which provides (streaming) protocol
  decoding functionality.
