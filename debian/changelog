@@ -1,3 +1,9 @@
+libsigrokdecode (0.4.1-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Aaron Brady <aaron@insom.me.uk>  Sun, 19 Feb 2017 16:00:32 -0500
+
 libsigrokdecode (0.4.0-1) unstable; urgency=medium
 
   * New upstream release.
